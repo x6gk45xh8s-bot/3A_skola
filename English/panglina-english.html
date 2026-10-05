@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Panglina English">
+<meta name="theme-color" content="#fff6e8">
+<title>Panglina English</title>
+<style>
+  :root {
+    --bg: #fff6e8;
+    --ink: #3b2a1a;
+    --muted: #8a6d52;
+    --line: #f0dcc0;
+    --card: #ffffff;
+    --orange: #f08a24;
+    --orange-dk: #c96a12;
+    --green: #36a852;
+    --green-dk: #23803c;
+    --red: #e2574c;
+    --red-dk: #b23a30;
+    --blue: #2f8ad8;
+    --gold: #f6b81c;
+    --shadow: 0 4px 0 rgba(120,80,30,.13), 0 10px 24px rgba(120,80,30,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); }
+  body {
+    font-family: ui-rounded, "SF Pro Rounded", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    touch-action: manipulation;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    -webkit-text-size-adjust: 100%;
+    background-image: radial-gradient(#f2dfc2 1.3px, transparent 1.6px);
+    background-size: 24px 24px;
+    overflow-x: hidden;
+  }
+  input, select { -webkit-user-select: text; user-select: text; font: inherit; }
+  #view { max-width: 760px; margin: 0 auto; padding: max(16px, env(safe-area-inset-top)) 16px 48px; }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+
+  /* ---------- animations ---------- */
+  @keyframes pop { 0%{transform:scale(.4);opacity:0} 65%{transform:scale(1.12)} 100%{transform:scale(1);opacity:1} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-9px)} 40%{transform:translateX(9px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-8px) rotate(2deg)} }
+  @keyframes catHappy { 0%,100%{transform:scale(1)} 25%{transform:scale(1.14) rotate(-6deg)} 75%{transform:scale(1.14) rotate(6deg)} }
+  @keyframes catSad { 0%,100%{transform:translateX(0)} 30%{transform:translateX(-6px)} 70%{transform:translateX(6px)} }
+  @keyframes fall { 0%{transform:translateY(-20px) rotate(0);opacity:1} 100%{transform:translateY(105vh) rotate(720deg);opacity:.8} }
+  @keyframes slideIn { 0%{transform:translateY(16px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+  @keyframes fillHold { from{width:0} to{width:100%} }
+  @keyframes glow { 0%,100%{box-shadow:0 0 0 0 rgba(240,138,36,.55)} 50%{box-shadow:0 0 0 10px rgba(240,138,36,0)} }
+
+  .anim-in { animation: slideIn .28s ease-out both; }
+  .pop { animation: pop .35s ease-out both; }
+  .shake { animation: shake .45s ease-in-out; }
+  .cat-float { animation: float 3s ease-in-out infinite; }
+  .cat-happy { animation: catHappy .6s ease-in-out; }
+  .cat-sad { animation: catSad .45s ease-in-out; }
+
+  /* ---------- generic ---------- */
+  .card { background: var(--card); border-radius: 22px; box-shadow: var(--shadow); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 58px; padding: 0 24px; border-radius: 18px;
+    font-weight: 800; font-size: 20px;
+    background: var(--orange); color: #fff; box-shadow: 0 5px 0 var(--orange-dk);
+    transition: transform .08s, box-shadow .08s;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--orange-dk); }
+  .btn.green { background: var(--green); box-shadow: 0 5px 0 var(--green-dk); }
+  .btn.green:active { box-shadow: 0 2px 0 var(--green-dk); }
+  .btn.red { background: var(--red); box-shadow: 0 5px 0 var(--red-dk); }
+  .btn.red:active { box-shadow: 0 2px 0 var(--red-dk); }
+  .btn.ghost { background: #fff; color: var(--ink); box-shadow: 0 4px 0 var(--line); }
+  .btn.ghost:active { box-shadow: 0 1px 0 var(--line); }
+  .btn.small { min-height: 46px; font-size: 17px; padding: 0 16px; border-radius: 14px; }
+  .btn.wide { width: 100%; }
+  .icon-btn {
+    width: 52px; height: 52px; border-radius: 16px; background: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 24px;
+    box-shadow: 0 4px 0 var(--line); flex-shrink: 0;
+  }
+  .icon-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--line); }
+  .muted { color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .spacer { flex: 1; }
+  .pic { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+  .pic svg { display: block; }
+  h1 { font-size: 30px; font-weight: 900; letter-spacing: -.3px; }
+  h2 { font-size: 22px; font-weight: 900; }
+  h3 { font-size: 18px; font-weight: 800; }
+
+  /* ---------- top bar ---------- */
+  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; background: #fff;
+    border-radius: 999px; padding: 8px 14px; font-weight: 900; font-size: 18px;
+    box-shadow: 0 3px 0 var(--line);
+  }
+
+  /* ---------- home ---------- */
+  .hero { display: flex; align-items: center; gap: 14px; margin: 4px 0 18px; }
+  .hero .bubble {
+    position: relative; background: #fff; border-radius: 20px; padding: 14px 18px;
+    font-size: 20px; font-weight: 800; box-shadow: var(--shadow); flex: 1;
+  }
+  .hero .bubble::before {
+    content: ""; position: absolute; left: -12px; top: 50%; margin-top: -10px;
+    border: 10px solid transparent; border-right: 12px solid #fff; border-left: 0;
+  }
+  .hero .bubble small { display: block; font-size: 15px; font-weight: 700; color: var(--muted); margin-top: 4px; }
+  .daily {
+    width: 100%; display: flex; align-items: center; gap: 16px; text-align: left;
+    background: linear-gradient(135deg, #ffb347, #f08a24); color: #fff;
+    border-radius: 24px; padding: 18px 20px; box-shadow: 0 6px 0 var(--orange-dk), 0 14px 30px rgba(240,138,36,.25);
+    margin-bottom: 22px;
+  }
+  .daily:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--orange-dk); }
+  .daily .big { font-size: 46px; }
+  .daily .t1 { font-size: 24px; font-weight: 900; }
+  .daily .t2 { font-size: 16px; font-weight: 700; opacity: .95; margin-top: 2px; }
+  .daily.done { background: linear-gradient(135deg, #6fd08a, #36a852); box-shadow: 0 6px 0 var(--green-dk), 0 14px 30px rgba(54,168,82,.25); }
+
+  .map { position: relative; padding-left: 8px; }
+  .map::before {
+    content: ""; position: absolute; left: 44px; top: 20px; bottom: 20px;
+    border-left: 4px dashed #e6c9a0;
+  }
+  .node {
+    position: relative; display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    background: #fff; border-radius: 22px; padding: 12px 14px; margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .node:active { transform: translateY(2px); }
+  .node.current { outline: 4px solid var(--orange); animation: glow 2.2s infinite; }
+  .node .disc {
+    width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 34px;
+    color: #fff; position: relative;
+  }
+  .node .num {
+    position: absolute; right: -4px; bottom: -4px; background: #fff; color: var(--ink);
+    border-radius: 999px; font-size: 13px; font-weight: 900; padding: 2px 7px; box-shadow: 0 2px 0 var(--line);
+  }
+  .node .title { font-size: 20px; font-weight: 900; }
+  .node .sub { font-size: 15px; color: var(--muted); font-weight: 700; margin-top: 1px; }
+  .bar { height: 10px; background: #f5e8d6; border-radius: 99px; overflow: hidden; margin-top: 8px; }
+  .bar > i { display: block; height: 100%; border-radius: 99px; background: var(--green); }
+  .here { position: absolute; right: 8px; top: -18px; display: flex; align-items: flex-end; gap: 2px; }
+  .here span { background: var(--orange); color: #fff; font-size: 12px; font-weight: 900; padding: 3px 8px; border-radius: 99px; margin-bottom: 6px; }
+  .home-foot { display: flex; gap: 12px; margin-top: 10px; }
+  .hold { position: relative; overflow: hidden; }
+  .hold .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(240,138,36,.25); }
+  .hold.holding .fill { animation: fillHold 1.2s linear forwards; }
+  .tip {
+    background: #fffbe0; border: 2px dashed #f2d36b; border-radius: 18px; padding: 12px 14px;
+    font-size: 15px; font-weight: 700; margin-bottom: 18px; display: flex; gap: 10px; align-items: flex-start;
+  }
+
+  /* ---------- unit ---------- */
+  .unit-head { border-radius: 24px; color: #fff; padding: 18px; display: flex; align-items: center; gap: 14px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .unit-head .ico { font-size: 52px; }
+  .unit-head .t1 { font-size: 26px; font-weight: 900; line-height: 1.1; }
+  .unit-head .t2 { font-size: 16px; font-weight: 700; opacity: .95; margin-top: 4px; }
+  .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+  .mode {
+    background: #fff; border-radius: 20px; padding: 14px 8px 12px; text-align: center; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 130px; justify-content: center;
+  }
+  .mode:active { transform: translateY(2px); }
+  .mode .mi { font-size: 40px; }
+  .mode .mt { font-size: 17px; font-weight: 900; line-height: 1.1; }
+  .mode .ms { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .mode .st { font-size: 16px; letter-spacing: 1px; }
+  .section { padding: 16px; margin-bottom: 14px; }
+  .section h3 { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+  .section h3 .pg { font-size: 14px; color: var(--muted); font-weight: 700; }
+  .phrase { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px 4px; border-top: 2px solid #f8eedf; }
+  .phrase:first-of-type { border-top: 0; }
+  .phrase b { font-size: 18px; }
+  .phrase .cs { font-size: 15px; color: var(--muted); font-weight: 700; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wchip { display: inline-flex; align-items: center; gap: 6px; background: #fff8ee; border: 2px solid var(--line); border-radius: 14px; padding: 6px 10px 6px 6px; font-weight: 800; font-size: 17px; }
+  .wchip:active { background: #ffeccc; }
+  .wchip.got { border-color: #9ad8a9; background: #effaf1; }
+
+  /* ---------- play ---------- */
+  .progress { flex: 1; height: 16px; background: #f5e8d6; border-radius: 99px; overflow: hidden; }
+  .progress > i { display: block; height: 100%; background: linear-gradient(90deg, #ffb347, #f08a24); border-radius: 99px; transition: width .3s; }
+  .coach { display: flex; align-items: center; gap: 10px; margin: 2px 0 12px; min-height: 76px; }
+  .coach .say { background: #fff; border-radius: 18px; padding: 10px 14px; font-weight: 800; font-size: 18px; box-shadow: var(--shadow); position: relative; }
+  .coach .say small { display: block; color: var(--muted); font-size: 14px; font-weight: 700; }
+  .prompt { text-align: center; padding: 18px 16px; margin-bottom: 16px; }
+  .prompt .q { font-size: 18px; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
+  .prompt .word { font-size: 46px; font-weight: 900; letter-spacing: .5px; }
+  .prompt .cs { font-size: 18px; font-weight: 700; color: var(--muted); margin-top: 6px; }
+  .speaker {
+    width: 96px; height: 96px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 46px;
+    display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 6px 0 #1f679f;
+  }
+  .speaker:active { transform: translateY(3px); box-shadow: 0 3px 0 #1f679f; }
+  .speaker.sm { width: 56px; height: 56px; font-size: 26px; box-shadow: 0 4px 0 #1f679f; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .opt {
+    background: #fff; border-radius: 22px; box-shadow: var(--shadow); aspect-ratio: 1.25;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 4px solid transparent;
+  }
+  .opt:active { transform: translateY(2px); }
+  .opt .lbl { font-size: 20px; font-weight: 900; }
+  .opt.right { border-color: var(--green); background: #effaf1; }
+  .opt.wrong { border-color: var(--red); background: #fdeeee; }
+  .opt.dim { opacity: .45; }
+  .tf-pic { padding: 18px; text-align: center; margin-bottom: 14px; }
+  .tf-say { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 30px; font-weight: 900; margin-top: 10px; }
+  .tf-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .tf-btns .btn { min-height: 86px; font-size: 28px; border-radius: 22px; }
+  .slots { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 6px 0 18px; }
+  .slot {
+    width: 48px; height: 58px; border-radius: 12px; background: #fff; border: 3px dashed #e6c9a0;
+    display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900;
+  }
+  .slot.filled { border-style: solid; border-color: var(--orange); }
+  .slot.next { border-color: var(--blue); }
+  .slot.bad { border-color: var(--red); background: #fdeeee; color: var(--red); }
+  .slot.ok { border-color: var(--green); background: #effaf1; color: var(--green-dk); }
+  .slot.fixed { border: 0; background: none; width: 20px; }
+  .tiles { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+  .tile {
+    width: 60px; height: 64px; border-radius: 16px; background: #fff3dd; font-size: 32px; font-weight: 900;
+    box-shadow: 0 5px 0 #e6c9a0; display: flex; align-items: center; justify-content: center;
+  }
+  .tile:active { transform: translateY(3px); box-shadow: 0 2px 0 #e6c9a0; }
+  .tile.used { visibility: hidden; }
+  .sent-line {
+    min-height: 74px; background: #fff; border-radius: 18px; border: 3px dashed #e6c9a0; padding: 10px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin-bottom: 16px;
+  }
+  .sent-line.ok { border: 3px solid var(--green); background: #effaf1; }
+  .chip {
+    background: #fff3dd; border-radius: 14px; padding: 10px 14px; font-size: 24px; font-weight: 900;
+    box-shadow: 0 4px 0 #e6c9a0;
+  }
+  .chip:active { transform: translateY(2px); box-shadow: 0 2px 0 #e6c9a0; }
+  .chip.in { background: #fff; box-shadow: 0 3px 0 var(--orange); }
+  .chip.bad { background: #fdeeee; color: var(--red); box-shadow: 0 3px 0 var(--red); }
+  .chip.used { visibility: hidden; }
+  .punct { font-size: 26px; font-weight: 900; }
+  .tools { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+  .next-wrap { margin-top: 18px; }
+
+  /* ---------- flashcards ---------- */
+  .fc {
+    perspective: 1200px; width: 100%; height: 360px; margin: 6px 0 18px;
+  }
+  .fc-in { position: relative; width: 100%; height: 100%; transition: transform .45s; transform-style: preserve-3d; }
+  .fc.flip .fc-in { transform: rotateY(180deg); }
+  .fc-face {
+    position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    background: #fff; border-radius: 28px; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center;
+  }
+  .fc-back { transform: rotateY(180deg); background: #fff8ee; }
+  .fc .en { font-size: 44px; font-weight: 900; }
+  .fc .csw { font-size: 38px; font-weight: 900; color: var(--orange-dk); }
+  .fc .ex { font-size: 20px; font-weight: 700; color: var(--muted); }
+  .fc .hint { font-size: 14px; font-weight: 700; color: #c5ab8c; }
+
+  /* ---------- result ---------- */
+  .result { text-align: center; padding: 26px 18px; }
+  .result .stars { font-size: 64px; letter-spacing: 6px; margin: 8px 0; }
+  .result .score { font-size: 26px; font-weight: 900; }
+  .newst { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 16px 0 6px; }
+  .sticker {
+    width: 92px; border-radius: 18px; background: #fff; box-shadow: var(--shadow); padding: 10px 4px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 800; font-size: 14px; text-align: center;
+  }
+
+  /* ---------- album ---------- */
+  .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+  .album-grid .sticker { width: auto; }
+  .sticker.locked .pic { filter: grayscale(1); opacity: .28; }
+  .sticker.locked { background: #fbf4ea; box-shadow: none; border: 2px dashed var(--line); }
+  .dots { font-size: 12px; letter-spacing: 2px; color: var(--orange); }
+
+  /* ---------- parent ---------- */
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field label { font-weight: 800; font-size: 15px; color: var(--muted); }
+  .field input, .field select {
+    min-height: 50px; border-radius: 14px; border: 2px solid var(--line); padding: 0 14px; font-size: 18px; background: #fff; color: var(--ink);
+  }
+  .seg { display: flex; gap: 8px; }
+  .seg button { flex: 1; min-height: 48px; border-radius: 14px; background: #fff; border: 2px solid var(--line); font-weight: 800; font-size: 16px; }
+  .seg button.on { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .weak { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 2px solid #f8eedf; }
+  .weak:first-child { border-top: 0; }
+  .weak .w { flex: 1; font-weight: 800; }
+  .weak .w small { display: block; color: var(--muted); font-weight: 700; }
+  .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat { background: #fff8ee; border-radius: 16px; padding: 12px; text-align: center; }
+  .stat b { display: block; font-size: 28px; }
+  .stat span { font-size: 14px; font-weight: 700; color: var(--muted); }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(30px); opacity: 0;
+    background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 16px; font-weight: 800; font-size: 18px;
+    transition: all .25s; pointer-events: none; z-index: 50; max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 40; }
+  #confetti i { position: absolute; top: -20px; width: 10px; height: 14px; border-radius: 3px; animation: fall linear forwards; }
+
+  @media (max-width: 520px) {
+    .modes { grid-template-columns: repeat(2, 1fr); }
+    .prompt .word { font-size: 38px; }
+    .slot { width: 40px; height: 52px; font-size: 26px; }
+    .tile { width: 52px; height: 58px; font-size: 28px; }
+    .chip { font-size: 20px; padding: 8px 11px; }
+    .fc { height: 320px; }
+    h1 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div id="toast"></div>
+<div id="confetti"></div>
+
+<script>
+/* ==========================================================================
+   CONTENT — Explore Together 1 (Oxford), pracovní sešit.
+   Words exactly from Slovníček pp. 61–63 + a few extras used in the workbook.
+   Word tuple: [en, cs, pic, art, example]
+     pic: emoji, "svg:<name>" (custom drawing) or "day:MON" (calendar)
+     art: undefined = a/an automatically · "" = no article (uncountable, adjective, day)
+          "pl" = plural · "the" = with "the" · "ph" = whole phrase · "-" = not used in Ano/Ne
+   ========================================================================== */
+const UNITS = [
+  {
+    id: "hello", no: "★", title: "Hello again", cs: "Ahoj znovu", icon: "🧭", color: "#f08a24", pages: "2–5",
+    one: "It's {x}.", many: "They're {x}.",
+    groups: [
+      { t: "Výbava průzkumníka", pg: "str. 3", w: [
+        ["binoculars", "dalekohled", "svg:binoculars", "pl", "I've got the binoculars."],
+        ["camera", "fotoaparát", "📷", , "I've got a camera."],
+        ["map", "mapa", "🗺️", , "Here's a map."],
+        ["torch", "baterka", "🔦", , "I've got a torch."],
+        ["watch", "hodinky", "⌚", , "Have you got a watch?"],
+      ]},
+      { t: "Dny v týdnu", pg: "str. 4", w: [
+        ["Monday", "pondělí", "day:MON", ""],
+        ["Tuesday", "úterý", "day:TUE", ""],
+        ["Wednesday", "středa", "day:WED", ""],
+        ["Thursday", "čtvrtek", "day:THU", ""],
+        ["Friday", "pátek", "day:FRI", ""],
+        ["Saturday", "sobota", "day:SAT", ""],
+        ["Sunday", "neděle", "day:SUN", ""],
+      ]},
+      { t: "Opakování z loňska", pg: "str. 5", w: [
+        ["cat", "kočka", "🐱"], ["dog", "pes", "🐶"], ["horse", "kůň", "🐴"], ["rabbit", "králík", "🐰"],
+        ["hedgehog", "ježek", "🦔"], ["ball", "míč", "⚽"], ["doll", "panenka", "🪆"],
+        ["scooter", "koloběžka", "🛴"], ["garden", "zahrada", "🏡", "the", "We're in the garden."],
+      ]},
+    ],
+    phrases: [
+      ["I'm Toby. I'm 9.", "Já jsem Toby. Je mi 9."],
+      ["This is Ella.", "To je Ella."],
+      ["He's my friend.", "On je můj kamarád."],
+      ["She's my sister.", "Ona je moje sestra."],
+      ["We're explorers.", "My jsme průzkumníci."],
+      ["He's got the bag.", "On má batoh."],
+      ["She's got a watch.", "Ona má hodinky."],
+    ],
+    sentences: [
+      ["This is Ella.", "To je Ella.", "👧"],
+      ["She's my sister.", "Ona je moje sestra.", "👧"],
+      ["He's my friend.", "On je můj kamarád.", "👦"],
+      ["We're explorers.", "My jsme průzkumníci.", "🧭"],
+      ["I've got the binoculars.", "Mám dalekohled.", "svg:binoculars"],
+      ["Have you got a watch?", "Máš hodinky?", "⌚"],
+      ["She's got a camera.", "Ona má fotoaparát.", "📷"],
+      ["He's got a torch.", "On má baterku.", "🔦"],
+      ["Here's a map.", "Tady je mapa.", "🗺️"],
+      ["It's Friday.", "Je pátek.", "day:FRI"],
+    ],
+  },
+  {
+    id: "u1", no: "1", title: "Outdoors", cs: "Venku", icon: "🏞️", color: "#36a852", pages: "6–12",
+    one: "There's {x}.", many: "There are {x}.",
+    groups: [
+      { t: "V přírodě", pg: "str. 6–9", w: [
+        ["bird", "pták", "🐦"],
+        ["boat", "loď", "⛵", , "There's a boat on the lake."],
+        ["fish", "ryba", "🐟", , "There's a fish in the river."],
+        ["flower", "květina", "🌼", , "There are lots of flowers."],
+        ["house", "dům", "🏠", , "I can see a red house."],
+        ["lake", "jezero", "svg:lake"],
+        ["mountain", "hora", "⛰️", , "There are 2 mountains."],
+        ["river", "řeka", "svg:river"],
+        ["tent", "stan", "⛺"],
+        ["tree", "strom", "🌳", , "I can see a green tree."],
+      ]},
+      { t: "Počasí (Shadows)", pg: "str. 10", w: [
+        ["It's sunny", "je slunečno", "☀️", "ph"],
+        ["It's cloudy", "je zataženo, oblačno", "☁️", "ph"],
+        ["It's raining", "prší", "🌧️", "ph"],
+        ["It's snowing", "sněží", "🌨️", "ph"],
+      ]},
+    ],
+    phrases: [
+      ["There's a lake.", "Je tam jezero."],
+      ["There are flowers.", "Jsou tam květiny."],
+      ["There are lots of birds.", "Je tam hodně ptáků."],
+      ["I can see a pink bird.", "Vidím růžového ptáka."],
+    ],
+    sentences: [
+      ["There's a tree.", "Je tam strom.", "🌳"],
+      ["There's a fish in the river.", "V řece je ryba.", "🐟"],
+      ["There are 3 flowers.", "Jsou tam 3 květiny.", "🌼🌼🌼"],
+      ["There are lots of birds.", "Je tam hodně ptáků.", "🐦🐦🐦"],
+      ["I can see a red house.", "Vidím červený dům.", "🏠"],
+      ["There's a boat on the lake.", "Na jezeře je loď.", "⛵"],
+      ["There are 2 mountains.", "Jsou tam 2 hory.", "⛰️⛰️"],
+      ["There's a tent.", "Je tam stan.", "⛺"],
+      ["It's sunny.", "Je slunečno.", "☀️"],
+      ["It's raining.", "Prší.", "🌧️"],
+    ],
+  },
+  {
+    id: "u2", no: "2", title: "My favourite!", cs: "Moje oblíbené!", icon: "🍕", color: "#e2574c", pages: "13–19",
+    one: "It's {x}.", many: "They're {x}.",
+    groups: [
+      { t: "Jídlo", pg: "str. 13–16", w: [
+        ["chicken", "kuře", "🍗", ""],
+        ["fish", "ryba", "🐟"],
+        ["ham", "šunka", "🥓", "", "My favourite food is ham."],
+        ["juice", "džus", "🧃", "", "My favourite drink is juice."],
+        ["mushrooms", "houby", "🍄", "pl", "I like mushrooms."],
+        ["onions", "cibule", "🧅", "pl", "We don't like onions."],
+        ["peppers", "papriky", "🫑", "pl", "I don't like peppers."],
+        ["pizza", "pizza", "🍕", "", "I like pizza."],
+        ["salad", "salát", "🥗", "", "My favourite salad is tomato salad."],
+        ["soup", "polévka", "🍲", "", "My favourite soup is fish soup."],
+      ]},
+      { t: "Ještě jídlo", pg: "str. 14–19", w: [
+        ["cheese", "sýr", "🧀", "", "We like cheese."],
+        ["olives", "olivy", "🫒", "pl"],
+        ["tomatoes", "rajčata", "🍅", "pl", "We like tomatoes."],
+        ["milk", "mléko", "🥛", ""],
+      ]},
+      { t: "Food in art", pg: "str. 17", w: [
+        ["bread", "chléb", "🍞", ""],
+        ["fruit", "ovoce", "🍎🍐", ""],
+        ["picture", "obrázek", "🎨"],
+        ["famous", "slavný", "⭐", "-"],
+        ["basket", "košík", "🧺"],
+        ["table", "stůl", "svg:table"],
+      ]},
+    ],
+    phrases: [
+      ["My favourite food is pizza.", "Moje oblíbené jídlo je pizza."],
+      ["I like mushrooms.", "Mám ráda houby."],
+      ["I don't like peppers.", "Nemám ráda papriky."],
+      ["We like cheese.", "Máme rádi sýr."],
+      ["We don't like onions.", "Nemáme rádi cibuli."],
+      ["Do you like pizza? – Yes, I do.", "Máš ráda pizzu? – Ano."],
+      ["Do you like fish? – No, I don't.", "Máš ráda rybu? – Ne."],
+    ],
+    sentences: [
+      ["I like pizza.", "Mám ráda pizzu.", "🍕"],
+      ["I don't like onions.", "Nemám ráda cibuli.", "🧅"],
+      ["My favourite food is pizza.", "Moje oblíbené jídlo je pizza.", "🍕"],
+      ["My favourite drink is juice.", "Můj oblíbený nápoj je džus.", "🧃"],
+      ["We like cheese.", "Máme rádi sýr.", "🧀"],
+      ["We don't like mushrooms.", "Nemáme rádi houby.", "🍄"],
+      ["Do you like chicken?", "Máš ráda kuře?", "🍗"],
+      ["My favourite soup is fish soup.", "Moje oblíbená polévka je rybí polévka.", "🍲"],
+      ["I like salad and tomatoes.", "Mám ráda salát a rajčata.", "🥗🍅"],
+    ],
+  },
+  {
+    id: "u3", no: "3", title: "Small creatures", cs: "Malé potvůrky", icon: "🐞", color: "#8e5bd6", pages: "22–28",
+    one: "It's {x}.", many: "They're {x}.",
+    groups: [
+      { t: "Malí tvorové", pg: "str. 22–25", w: [
+        ["ant", "mravenec", "🐜", , "The ants are on the stick."],
+        ["bee", "včela", "🐝", , "Bees are yellow and black."],
+        ["beetle", "brouk", "🪲", , "The beetles are on the stone."],
+        ["butterfly", "motýl", "🦋", , "The butterflies are on the flower."],
+        ["grass", "tráva", "🌿", "", "The grasshoppers are in the grass."],
+        ["grasshopper", "kobylka", "🦗", , "Grasshoppers can hop."],
+        ["insect", "hmyz", "🐞", , "Bees are insects."],
+        ["leaf", "list", "🍃", , "They're on the leaf."],
+        ["stick", "klacík", "🪵", , "It looks like a stick."],
+        ["stone", "kámen", "🪨"],
+      ]},
+      { t: "Maskování", pg: "str. 26", w: [
+        ["animal", "zvíře", "🐾"],
+        ["camouflage", "maskování", "🦎", "-", "Camouflage helps insects stay safe."],
+        ["caterpillar", "housenka", "🐛", , "This green caterpillar can hide in a green plant."],
+        ["hide", "schovat (se)", "🙈", "-", "It can hide in the grass."],
+      ]},
+    ],
+    phrases: [
+      ["They're in the flower.", "Jsou v květině."],
+      ["They're on the leaf.", "Jsou na listu."],
+      ["It looks like a stick.", "Vypadá jako klacík."],
+      ["It can hide in the grass.", "Umí se schovat v trávě."],
+    ],
+    sentences: [
+      ["They're on the leaf.", "Jsou na listu.", "🍃"],
+      ["They're in the flower.", "Jsou v květině.", "🌼"],
+      ["The ants are on the stick.", "Mravenci jsou na klacíku.", "🐜🪵"],
+      ["The grasshoppers are in the grass.", "Kobylky jsou v trávě.", "🦗🌿"],
+      ["Bees are insects.", "Včely jsou hmyz.", "🐝"],
+      ["They're yellow and black.", "Jsou žluté a černé.", "🐝"],
+      ["It looks like a leaf.", "Vypadá jako list.", "🍃"],
+      ["The beetles are on the stone.", "Brouci jsou na kameni.", "🪲🪨"],
+      ["I can see a butterfly.", "Vidím motýla.", "🦋"],
+    ],
+  },
+  {
+    id: "u4", no: "4", title: "Clothes", cs: "Oblečení", icon: "👕", color: "#2f8ad8", pages: "29–35",
+    one: "I'm wearing {x}.", many: "I'm wearing {x}.",
+    groups: [
+      { t: "Oblečení", pg: "str. 29–32", w: [
+        ["boots", "vysoké boty", "👢", "pl"],
+        ["dress", "šaty", "👗"],
+        ["hat", "čepice, klobouk", "👒", , "I'm wearing a green hat."],
+        ["jacket", "bunda, sako", "🧥"],
+        ["jumper", "svetr", "svg:jumper"],
+        ["shoes", "boty", "👟", "pl", "They're shoes."],
+        ["shorts", "kraťasy", "🩳", "pl", "I'm wearing a T-shirt and shorts."],
+        ["skirt", "sukně", "svg:skirt"],
+        ["trousers", "kalhoty", "👖", "pl"],
+        ["T-shirt", "tričko", "👕", , "It's a T-shirt."],
+        ["socks", "ponožky", "🧦", "pl"],
+      ]},
+      { t: "Sloupcové grafy", pg: "str. 33", w: [
+        ["bar chart", "sloupcový graf", "📊", "-"],
+        ["number", "počet, číslo", "🔢", "-"],
+        ["survey", "anketa, přehled", "📋", "-"],
+      ]},
+    ],
+    phrases: [
+      ["I'm wearing a green hat.", "Mám na sobě zelenou čepici."],
+      ["It's a T-shirt.", "To je tričko."],
+      ["They're shoes.", "To jsou boty."],
+      ["How many children are wearing skirts?", "Kolik dětí má na sobě sukni?"],
+    ],
+    sentences: [
+      ["I'm wearing a hat.", "Mám na sobě klobouk.", "👒"],
+      ["I'm wearing a green hat.", "Mám na sobě zelenou čepici.", "👒"],
+      ["I'm wearing a T-shirt and shorts.", "Mám na sobě tričko a kraťasy.", "👕🩳"],
+      ["I'm wearing a dress and boots.", "Mám na sobě šaty a vysoké boty.", "👗👢"],
+      ["I'm wearing trousers and a jumper.", "Mám na sobě kalhoty a svetr.", "👖"],
+      ["It's a jacket.", "To je bunda.", "🧥"],
+      ["They're shoes.", "To jsou boty.", "👟"],
+      ["How many children are wearing skirts?", "Kolik dětí má na sobě sukni?", "📊"],
+    ],
+  },
+  {
+    id: "u5", no: "5", title: "The beach", cs: "Pláž", icon: "🏖️", color: "#e8a412", pages: "38–44",
+    one: "It's {x}.", many: "They're {x}.",
+    groups: [
+      { t: "Na pláži", pg: "str. 38–41", w: [
+        ["bucket", "kyblík", "🪣", , "Your bucket is clean."],
+        ["clean", "čistý", "🧼", ""],
+        ["dirty", "špinavý", "🐷", "", "My dog is dirty."],
+        ["dry", "suchý", "🏜️", ""],
+        ["sand", "písek", "🏖️", ""],
+        ["sandcastle", "hrad z písku", "🏰", , "My sandcastle is big."],
+        ["sea", "moře", "🌊", "the"],
+        ["spade", "rýč, lopatka", "svg:spade", , "My spade is blue."],
+        ["towel", "ručník", "svg:towel", , "My towel is wet."],
+        ["wet", "mokrý", "💦", ""],
+      ]},
+      { t: "Koloběh vody", pg: "str. 42", w: [
+        ["cloud", "mrak", "☁️", , "There's a cloud in the sky."],
+        ["rain", "déšť", "🌧️", ""],
+        ["sky", "obloha", "svg:sky", "the"],
+        ["sun", "slunce", "☀️", "the", "The sun makes the sea warm."],
+        ["water", "voda", "💧", ""],
+      ]},
+      { t: "Jaké to je?", pg: "str. 39–43", w: [
+        ["big", "velký", "🐘", ""],
+        ["small", "malý", "🐭", ""],
+        ["new", "nový", "🎁", ""],
+        ["old", "starý", "🏚️", ""],
+      ]},
+    ],
+    phrases: [
+      ["My spade is blue.", "Můj rýč je modrý."],
+      ["Your spade is red.", "Tvůj rýč je červený."],
+      ["Is your towel wet?", "Je tvůj ručník mokrý?"],
+      ["Are your feet dry?", "Máš suché nohy?"],
+    ],
+    sentences: [
+      ["My spade is blue.", "Můj rýč je modrý.", "svg:spade"],
+      ["Your spade is red.", "Tvůj rýč je červený.", "svg:spade"],
+      ["My towel is wet.", "Můj ručník je mokrý.", "svg:towel"],
+      ["My sandcastle is big.", "Můj hrad z písku je velký.", "🏰"],
+      ["Your bucket is clean.", "Tvůj kyblík je čistý.", "🪣"],
+      ["My dog is dirty and wet.", "Můj pes je špinavý a mokrý.", "🐶💦"],
+      ["Is your towel red?", "Je tvůj ručník červený?", "svg:towel"],
+      ["Are your feet dry?", "Máš suché nohy?", "🦶"],
+      ["The sun makes the sea warm.", "Slunce ohřívá moře.", "☀️🌊"],
+    ],
+  },
+  {
+    id: "fest", no: "🎉", title: "Festivals", cs: "Svátky", icon: "🎆", color: "#e0529c", pages: "Bonfire Night · Mother's Day",
+    one: "It's {x}.", many: "They're {x}.",
+    groups: [
+      { t: "Bonfire Night (5. listopadu)", pg: "", w: [
+        ["bonfire", "táborák, oheň", "🔥"],
+        ["fireworks", "ohňostroj, rachejtle", "🎆", "pl"],
+        ["potato", "brambor", "🥔"],
+        ["toffee apple", "jablko v karamelu", "🍎", , "I like toffee apples."],
+      ]},
+      { t: "Mother's Day (květen)", pg: "", w: [
+        ["a cup of coffee", "šálek kávy", "☕", "ph"],
+        ["bookmark", "záložka do knihy", "🔖"],
+        ["card", "přání(čko)", "💌", , "This is a card for Mum."],
+        ["frame", "rámeček", "🖼️"],
+      ]},
+    ],
+    phrases: [
+      ["Happy Bonfire Night!", "Veselou Noc ohňů!"],
+      ["Happy Mother's Day!", "Všechno nejlepší ke Dni matek!"],
+    ],
+    sentences: [
+      ["There's a bonfire.", "Je tam oheň.", "🔥"],
+      ["I can see fireworks.", "Vidím ohňostroj.", "🎆"],
+      ["I like toffee apples.", "Mám ráda jablka v karamelu.", "🍎"],
+      ["This is a card for Mum.", "Tohle je přáníčko pro maminku.", "💌"],
+      ["Happy Mother's Day!", "Všechno nejlepší ke Dni matek!", "💐"],
+      ["This is a bookmark.", "Tohle je záložka.", "🔖"],
+    ],
+  },
+];
+
+/* Build word index: id = lowercase English. A word in two units (fish) shares one progress record. */
+const WORDS = {};
+for (const u of UNITS) {
+  u.words = [];
+  for (const g of u.groups) {
+    g.ids = [];
+    for (const [en, cs, p, a, ex] of g.w) {
+      const id = en.toLowerCase();
+      if (!WORDS[id]) WORDS[id] = { id, en, cs, p, a, ex };
+      if (!u.words.includes(id)) u.words.push(id);
+      g.ids.push(id);
+    }
+  }
+}
+const UNIT = Object.fromEntries(UNITS.map(u => [u.id, u]));
+
+/* ==========================================================================
+   PICTURES — emoji or small inline SVGs for words without a good emoji
+   ========================================================================== */
+const SVG = {
+  binoculars: `<rect x="9" y="14" width="18" height="30" rx="6" fill="#4b4b55"/><rect x="37" y="14" width="18" height="30" rx="6" fill="#4b4b55"/><rect x="24" y="20" width="16" height="10" rx="3" fill="#6d6d78"/><circle cx="18" cy="44" r="11" fill="#33333b"/><circle cx="46" cy="44" r="11" fill="#33333b"/><circle cx="18" cy="44" r="7" fill="#7ec8f0"/><circle cx="46" cy="44" r="7" fill="#7ec8f0"/><circle cx="15.5" cy="41.5" r="2.4" fill="#fff"/><circle cx="43.5" cy="41.5" r="2.4" fill="#fff"/>`,
+  lake: `<path d="M0 30 L14 18 L26 28 L38 14 L54 26 L64 20 L64 34 L0 34Z" fill="#7cc576"/><ellipse cx="32" cy="44" rx="29" ry="13" fill="#3d9be0"/><path d="M14 42 q4 -3 8 0 M30 48 q4 -3 8 0 M40 40 q4 -3 8 0" stroke="#bfe4ff" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M6 50 l0 -12 M9 51 l2 -11 M56 49 l0 -11 M59 50 l-2 -10" stroke="#3f8f3a" stroke-width="2.5" stroke-linecap="round"/>`,
+  river: `<rect x="2" y="6" width="60" height="52" rx="10" fill="#8fd17f"/><path d="M40 6 C 22 18, 48 30, 26 40 S 20 54, 30 58" stroke="#3d9be0" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M38 14 q3 -2 6 0 M30 36 q3 -2 6 0" stroke="#bfe4ff" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="12" cy="18" r="6" fill="#3f9a3a"/><circle cx="52" cy="46" r="6" fill="#3f9a3a"/>`,
+  jumper: `<path d="M20 10 L44 10 L58 22 L58 46 L50 46 L48 26 L48 54 L16 54 L16 26 L14 46 L6 46 L6 22 Z" fill="#e2574c"/><path d="M25 10 Q32 18 39 10" fill="#b23a30"/><rect x="16" y="50" width="32" height="5" fill="#b23a30"/><rect x="6" y="42" width="8" height="5" fill="#b23a30"/><rect x="50" y="42" width="8" height="5" fill="#b23a30"/><path d="M22 30 h20 M22 36 h20" stroke="#f3a19a" stroke-width="2.5" stroke-dasharray="3 3"/>`,
+  skirt: `<rect x="19" y="10" width="26" height="7" rx="2" fill="#6d3fb0"/><path d="M19 17 L45 17 L56 54 L8 54 Z" fill="#8e5bd6"/><path d="M26 17 L20 54 M32 17 L32 54 M38 17 L44 54" stroke="#6d3fb0" stroke-width="2"/>`,
+  spade: `<rect x="29" y="4" width="6" height="32" rx="2" fill="#a0672f"/><rect x="22" y="3" width="20" height="7" rx="3" fill="#7d4f22"/><path d="M20 34 L44 34 L42 50 Q32 62 22 50 Z" fill="#e2574c"/><path d="M26 40 L38 40" stroke="#f3a19a" stroke-width="2.5" stroke-linecap="round"/>`,
+  towel: `<rect x="10" y="6" width="44" height="6" rx="3" fill="#a0672f"/><rect x="14" y="10" width="36" height="48" rx="5" fill="#2f8ad8"/><rect x="14" y="18" width="36" height="5" fill="#fff"/><rect x="14" y="44" width="36" height="5" fill="#fff"/><path d="M18 58 v3 M24 58 v3 M30 58 v3 M36 58 v3 M42 58 v3 M46 58 v3" stroke="#2f8ad8" stroke-width="2"/>`,
+  sky: `<rect x="2" y="6" width="60" height="52" rx="10" fill="#8fd3ff"/><ellipse cx="22" cy="40" rx="12" ry="7" fill="#fff"/><ellipse cx="31" cy="36" rx="10" ry="8" fill="#fff"/><ellipse cx="40" cy="41" rx="9" ry="6" fill="#fff"/><path d="M40 18 q4 -4 8 0 q4 -4 8 0" stroke="#3b2a1a" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  table: `<rect x="6" y="20" width="52" height="8" rx="3" fill="#b5793d"/><rect x="10" y="28" width="6" height="28" rx="2" fill="#8f5a28"/><rect x="48" y="28" width="6" height="28" rx="2" fill="#8f5a28"/><rect x="12" y="38" width="40" height="4" fill="#8f5a28"/>`,
+};
+
+function pic(p, size) {
+  size = size || 64;
+  if (!p) return "";
+  if (p.startsWith("svg:")) {
+    return `<span class="pic"><svg width="${size}" height="${size}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${SVG[p.slice(4)] || ""}</svg></span>`;
+  }
+  if (p.startsWith("day:")) {
+    const d = p.slice(4);
+    return `<span class="pic"><svg width="${size}" height="${size}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="10" width="52" height="48" rx="8" fill="#fff" stroke="#e6c9a0" stroke-width="2.5"/><rect x="6" y="10" width="52" height="15" rx="8" fill="#e2574c"/><rect x="6" y="18" width="52" height="7" fill="#e2574c"/><rect x="18" y="5" width="5" height="12" rx="2.5" fill="#8a6d52"/><rect x="41" y="5" width="5" height="12" rx="2.5" fill="#8a6d52"/><text x="32" y="48" text-anchor="middle" font-family="ui-rounded,-apple-system,Arial,sans-serif" font-weight="900" font-size="17" fill="#3b2a1a">${d}</text></svg></span>`;
+  }
+  const g = graphemes(p);
+  const n = g === 1 ? 0.86 : g === 2 ? 0.5 : 0.36;
+  return `<span class="pic" style="font-size:${Math.round(size * n)}px">${p}</span>`;
+}
+function graphemes(s) {
+  try { return [...new Intl.Segmenter().segment(s)].length; }
+  catch (e) { return Math.max(1, [...s].filter(c => !/[️‍♀♂]/.test(c)).length); }
+}
+
+/* Panglina the explorer — same orange tabby as in Laura's maths app, now with a safari hat and binoculars */
+function panglina(size, cls) {
+  return `<svg class="${cls || ""}" width="${size}" height="${Math.round(size * 1.05)}" viewBox="0 0 110 115" xmlns="http://www.w3.org/2000/svg">
+    <path d="M78 90 Q100 78 95 55 Q90 42 82 50" stroke="#e07030" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <ellipse cx="55" cy="84" rx="28" ry="22" fill="#f5a043"/>
+    <ellipse cx="55" cy="88" rx="16" ry="13" fill="#fde8c8"/>
+    <path d="M38 74 Q55 70 72 74" stroke="#c96020" stroke-width="2" fill="none"/>
+    <circle cx="55" cy="46" r="26" fill="#f5a043"/>
+    <polygon points="32,27 26,9 44,23" fill="#f5a043"/>
+    <polygon points="78,27 84,9 66,23" fill="#f5a043"/>
+    <polygon points="34,25 30,13 43,23" fill="#f0a0a0"/>
+    <polygon points="76,25 80,13 67,23" fill="#f0a0a0"/>
+    <g transform="rotate(-7 55 24)">
+      <ellipse cx="55" cy="26" rx="33" ry="7" fill="#9c6b30"/>
+      <path d="M37 26 Q38 6 55 6 Q72 6 73 26 Z" fill="#c8904a"/>
+      <rect x="37.5" y="18" width="35" height="5" fill="#6b4a1f"/>
+    </g>
+    <ellipse cx="44" cy="46" rx="6" ry="7" fill="#ffffee"/>
+    <ellipse cx="66" cy="46" rx="6" ry="7" fill="#ffffee"/>
+    <ellipse cx="44" cy="47" rx="3.5" ry="5" fill="#3a8020"/>
+    <ellipse cx="66" cy="47" rx="3.5" ry="5" fill="#3a8020"/>
+    <circle cx="43" cy="46" r="1.5" fill="#111"/>
+    <circle cx="65" cy="46" r="1.5" fill="#111"/>
+    <circle cx="45" cy="44" r="1" fill="#fff"/>
+    <circle cx="67" cy="44" r="1" fill="#fff"/>
+    <polygon points="55,54 52,58 58,58" fill="#e05080"/>
+    <path d="M52,58 Q55,62 58,58" stroke="#c04060" stroke-width="1.5" fill="none"/>
+    <line x1="24" y1="53" x2="48" y2="55" stroke="#a06030" stroke-width="1.2"/>
+    <line x1="24" y1="57" x2="48" y2="57" stroke="#a06030" stroke-width="1.2"/>
+    <line x1="62" y1="55" x2="86" y2="53" stroke="#a06030" stroke-width="1.2"/>
+    <line x1="62" y1="57" x2="86" y2="57" stroke="#a06030" stroke-width="1.2"/>
+    <path d="M38 66 Q55 80 72 66" stroke="#6b4a1f" stroke-width="2" fill="none"/>
+    <rect x="45" y="71" width="8.5" height="13" rx="3" fill="#4b4b55"/>
+    <rect x="56.5" y="71" width="8.5" height="13" rx="3" fill="#4b4b55"/>
+    <rect x="52" y="74" width="6" height="4" fill="#6d6d78"/>
+    <circle cx="49.2" cy="83" r="3" fill="#7ec8f0"/>
+    <circle cx="60.8" cy="83" r="3" fill="#7ec8f0"/>
+    <ellipse cx="42" cy="104" rx="10" ry="7" fill="#f5a043"/>
+    <ellipse cx="68" cy="104" rx="10" ry="7" fill="#f5a043"/>
+    <ellipse cx="42" cy="106" rx="7" ry="5" fill="#fde8c8"/>
+    <ellipse cx="68" cy="106" rx="7" ry="5" fill="#fde8c8"/>
+  </svg>`;
+}
+
+/* ==========================================================================
+   STATE (localStorage, one JSON object)
+   ========================================================================== */
+const KEY = "panglina-english-3a";
+const INTERVAL = [0, 1, 2, 4, 7, 14];   // Leitner box → days until the word comes back
+const STICKER_BOX = 3;                  // correct on 3 different days → sticker
+const today = () => { const d = new Date(); return Math.floor((d - d.getTimezoneOffset() * 60000) / 86400000); };
+
+function defaults() {
+  return {
+    v: 1, name: "Laura", stars: 0, cur: "hello",
+    words: {}, best: {}, started: {}, sentOk: 0,
+    streak: { n: 0, last: -99 }, dailyLast: -99, days: [],
+    rate: 0.85, sound: true, tipDismissed: false,
+  };
+}
+let st = defaults();
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (s && s.v === 1) st = Object.assign(defaults(), s);
+  } catch (e) {}
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {}
+}
+load();
+
+function ws(id) { return st.words[id]; }
+function box(id) { return st.words[id] ? st.words[id].b : 0; }
+function hasSticker(id) { return box(id) >= STICKER_BOX; }
+function stickerCount(ids) { return (ids || Object.keys(WORDS)).filter(hasSticker).length; }
+
+/* Record an answer for a word. Box goes up at most once per day, so a sticker means "knew it on 3 different days". */
+function record(id, ok) {
+  const t = today();
+  const s = st.words[id] || (st.words[id] = { b: 0, d: t, l: -1, ok: 0, bad: 0 });
+  const before = s.b;
+  if (ok) {
+    s.ok++;
+    if (s.l !== t || s.b === 0) s.b = Math.min(5, s.b + 1);
+    s.d = t + INTERVAL[s.b];
+  } else {
+    s.bad++;
+    s.b = Math.min(s.b, 1);
+    s.d = t;
+  }
+  s.l = t;
+  if (!st.days.includes(t)) { st.days.push(t); if (st.days.length > 120) st.days.shift(); }
+  if (S && before < STICKER_BOX && s.b >= STICKER_BOX) S.newStickers.push(id);
+  save();
+}
+
+/* ==========================================================================
+   SPEECH + SOUNDS
+   ========================================================================== */
+let enVoice = null;
+function pickVoice() {
+  if (!window.speechSynthesis) return;
+  const vs = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang));
+  if (!vs.length) return;
+  const gb = v => /^en[-_]GB/i.test(v.lang);
+  const pref = ["Daniel", "Arthur", "Martha", "Kate", "Serena", "Oliver", "Stephanie", "Samantha", "Karen", "Moira"];
+  enVoice = vs.find(v => gb(v) && /Enhanced|Premium|Vylepšen/i.test(v.name)) || null;
+  if (!enVoice) for (const n of pref) {
+    const v = vs.find(v => v.name === n || v.name.startsWith(n + " "));
+    if (v) { enVoice = v; break; }
+  }
+  if (!enVoice) enVoice = vs.find(gb) || vs[0];
+}
+if (window.speechSynthesis) {
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+  let tries = 0;
+  const iv = setInterval(() => { pickVoice(); if (enVoice || ++tries > 20) clearInterval(iv); }, 250);
+}
+function speak(text, onEnd) {
+  if (!window.speechSynthesis || !text) { if (onEnd) onEnd(); return; }
+  if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/–/g, ","));
+  u.lang = "en-GB";
+  u.rate = st.rate;
+  if (enVoice) { u.voice = enVoice; u.lang = enVoice.lang; }
+  if (onEnd) { let done = false; const fin = () => { if (!done) { done = true; onEnd(); } }; u.onend = fin; setTimeout(fin, 900 + text.length * 110); }
+  speechSynthesis.speak(u);
+}
+
+let actx = null;
+function unlockAudio() {
+  // iOS: speech and Web Audio must be started from a tap once; afterwards they work from timers too.
+  try { if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } } catch (e) {}
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); } catch (e) {}
+}
+document.addEventListener("touchend", unlockAudio, { once: true, capture: true });
+document.addEventListener("click", unlockAudio, { once: true, capture: true });
+
+function tone(freq, start, dur, type, vol) {
+  if (!actx || !st.sound) return;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  const t0 = actx.currentTime + start;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol || 0.18, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(actx.destination); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+const sfx = {
+  ok() { tone(660, 0, .14); tone(880, .1, .22); },
+  bad() { tone(240, 0, .25, "triangle", .14); },
+  win() { [523, 659, 784, 1046].forEach((f, i) => tone(f, i * .11, .25)); },
+  tap() { tone(520, 0, .05, "sine", .06); },
+};
+
+/* ==========================================================================
+   HELPERS
+   ========================================================================== */
+const $view = document.getElementById("view");
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function shuffle(a) { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rnd(a) { return a[Math.floor(Math.random() * a.length)]; }
+function starsFor(ok, total) { const r = total ? ok / total : 0; return r >= .9 ? 3 : r >= .7 ? 2 : r >= .5 ? 1 : 0; }
+function starStr(n) { return "⭐".repeat(n) + "☆".repeat(3 - n); }
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.remove("show"), 1800);
+}
+function confetti(n) {
+  const layer = document.getElementById("confetti");
+  const cols = ["#f08a24", "#36a852", "#e2574c", "#2f8ad8", "#f6b81c", "#8e5bd6", "#e0529c"];
+  for (let i = 0; i < (n || 60); i++) {
+    const c = document.createElement("i");
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = rnd(cols);
+    c.style.animationDuration = (1.6 + Math.random() * 1.6) + "s";
+    c.style.animationDelay = Math.random() * .5 + "s";
+    layer.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+/* "a bird" / "an ant" / "pizza" / "onions" / "the sea" */
+function withArt(w) {
+  if (w.a === "" || w.a === "pl" || w.a === "ph" || w.a === "-") return w.en;
+  if (w.a) return w.a + " " + w.en;
+  return (/^[aeiou]/i.test(w.en) ? "an " : "a ") + w.en;
+}
+/* Sentence used in Ano/Ne and as a fallback example: the unit's grammar pattern */
+function statement(w, u) {
+  if (w.a === "ph") return /^It's/.test(w.en) ? w.en + "." : u.one.replace("{x}", w.en);
+  if (w.a === "" && /^[A-Z]/.test(w.en)) return "It's " + w.en + ".";
+  if (w.a === "" && u.id === "u5") return "It's " + w.en + ".";
+  return (w.a === "pl" ? u.many : u.one).replace("{x}", withArt(w));
+}
+function unitOf(id) { return UNITS.find(u => u.words.includes(id)) || UNITS[0]; }
+function exampleFor(w, u) { return w.ex || (w.a === "-" ? "" : statement(w, u || unitOf(w.id))); }
+const canSpell = w => /^[A-Za-z-]+$/.test(w.en) && w.en.length <= 11;
+const canTF = w => w.a !== "-";
+
+const PRAISE = [
+  ["Well done!", "Výborně!"], ["Great job!", "Skvělá práce!"], ["Super!", "Super!"],
+  ["Fantastic!", "Fantastické!"], ["Yes! That's right!", "Ano, správně!"], ["Brilliant!", "Paráda!"],
+];
+const OOPS = [["Oops!", "Nevadí, zkusíme to příště."], ["Not quite.", "Skoro! Podívej se, co je správně."], ["Try again next time!", "Příště to dáš!"]];
+
+/* ==========================================================================
+   HOME — map of the book
+   ========================================================================== */
+function curUnit() { return UNIT[st.cur] || UNITS[0]; }
+
+function renderHome() {
+  S = null;
+  const t = today();
+  const doneToday = st.dailyLast === t;
+  const total = Object.keys(WORDS).length, have = stickerCount();
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = window.navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+  const greet = doneToday ? "Dnešní výprava je hotová! 🎉" : rnd(["Kam vyrazíme dnes?", "Jdeme objevovat!", "Let's explore!"]);
+
+  $view.innerHTML = `
+    <div class="topbar">
+      <span class="badge">⭐ ${st.stars}</span>
+      <span class="badge">🔥 ${st.streak.last >= t - 1 ? st.streak.n : 0}</span>
+      <span class="spacer"></span>
+      <span class="badge">🏅 ${have}/${total}</span>
+    </div>
+    <div class="hero anim-in">
+      <div class="cat-float">${panglina(108)}</div>
+      <div class="bubble">Hi ${esc(st.name)}! 👋<small>${greet}</small></div>
+    </div>
+    ${isIOS && !standalone && !st.tipDismissed ? `<div class="tip"><span style="font-size:22px">📲</span><div style="flex:1">Tip pro rodiče: v Safari ťukněte na <b>Sdílet</b> → <b>Přidat na plochu</b>. Aplikace se pak otevře jako ikonka a pokrok se neztratí.</div><button class="icon-btn" style="width:40px;height:40px;font-size:18px" onclick="st.tipDismissed=true;save();renderHome()">✕</button></div>` : ""}
+    <button class="daily ${doneToday ? "done" : ""}" onclick="startDaily()">
+      <span class="big">${doneToday ? "✅" : "🎒"}</span>
+      <span style="flex:1"><div class="t1">${doneToday ? "Výprava hotová!" : "Dnešní výprava"}</div>
+      <div class="t2">${doneToday ? "Můžeš jít znovu, nebo si vyber lekci." : "10 úkolů · slovíčka, která potřebuješ zopakovat"}</div></span>
+      <span style="font-size:30px">➜</span>
+    </button>
+    <div class="map">
+      ${UNITS.map(u => {
+        const n = u.words.length, got = stickerCount(u.words);
+        const isCur = u.id === st.cur;
+        return `<button class="node ${isCur ? "current" : ""}" onclick="openUnit('${u.id}')">
+          ${isCur ? `<span class="here"><span>Tady jsme</span>${panglina(34)}</span>` : ""}
+          <span class="disc" style="background:${u.color}">${u.icon}<span class="num">${u.no}</span></span>
+          <span style="flex:1;min-width:0">
+            <div class="title">${u.title}</div>
+            <div class="sub">${u.cs} · ${u.id === "fest" ? u.pages : "str. " + u.pages}</div>
+            <div class="bar"><i style="width:${Math.round(got / n * 100)}%"></i></div>
+          </span>
+          <span class="muted" style="font-weight:900;font-size:15px;text-align:right">🏅<br>${got}/${n}</span>
+        </button>`;
+      }).join("")}
+    </div>
+    <div class="home-foot">
+      <button class="btn ghost" style="flex:1" onclick="renderAlbum()">📒 Album samolepek</button>
+      <button class="btn ghost hold" id="parentBtn" title="Podržte">👪<span class="fill"></span></button>
+    </div>
+    <p class="muted" style="text-align:center;font-size:13px;margin-top:10px;font-weight:700">Pro rodiče: podržte 👪</p>
+  `;
+  bindHold(document.getElementById("parentBtn"), renderParent);
+}
+
+function bindHold(el, fn) {
+  let tm = null;
+  const start = e => { e.preventDefault(); el.classList.add("holding"); tm = setTimeout(() => { el.classList.remove("holding"); fn(); }, 1200); };
+  const stop = () => { clearTimeout(tm); el.classList.remove("holding"); };
+  el.addEventListener("pointerdown", start);
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => el.addEventListener(ev, stop));
+  el.addEventListener("contextmenu", e => e.preventDefault());
+}
+
+/* ==========================================================================
+   UNIT
+   ========================================================================== */
+const MODES = [
+  { id: "cards", icon: "🃏", t: "Kartičky", s: "prohlédni si slova" },
+  { id: "listen", icon: "👂", t: "Poslouchej", s: "ťukni na obrázek" },
+  { id: "read", icon: "📖", t: "Přečti", s: "najdi obrázek" },
+  { id: "spell", icon: "🔤", t: "Skládej slovo", s: "z písmenek" },
+  { id: "sentence", icon: "🧩", t: "Skládej větu", s: "ze slov" },
+  { id: "tf", icon: "✅", t: "Ano, nebo ne?", s: "je to pravda?" },
+];
+
+function openUnit(uid) {
+  const u = UNIT[uid];
+  S = null;
+  $view.innerHTML = `
+    <div class="topbar">
+      <button class="icon-btn" onclick="renderHome()">←</button>
+      <span class="spacer"></span>
+      <span class="badge">⭐ ${st.stars}</span>
+    </div>
+    <div class="unit-head anim-in" style="background:${u.color}">
+      <span class="ico">${u.icon}</span>
+      <div><div class="t1">${u.no !== "★" && u.no !== "🎉" ? "Unit " + u.no + " · " : ""}${u.title}</div>
+      <div class="t2">${u.cs}${u.id === "fest" ? "" : " · pracovní sešit str. " + u.pages}</div></div>
+    </div>
+    <div class="modes">
+      ${MODES.map(m => {
+        const b = st.best[u.id + ":" + m.id] || 0;
+        return `<button class="mode" onclick="startMode('${u.id}','${m.id}')">
+          <span class="mi">${m.icon}</span><span class="mt">${m.t}</span><span class="ms">${m.s}</span>
+          ${m.id === "cards" ? "" : `<span class="st">${starStr(b)}</span>`}
+        </button>`;
+      }).join("")}
+    </div>
+    <div class="card section">
+      <h3>🗣️ Jak se to řekne</h3>
+      ${u.phrases.map(p => `<button class="phrase" onclick="speak(${esc(JSON.stringify(p[0]))})">
+        <span style="font-size:22px">🔊</span><span><b>${esc(p[0])}</b><div class="cs">${esc(p[1])}</div></span></button>`).join("")}
+    </div>
+    ${u.groups.map(g => `<div class="card section">
+      <h3>${esc(g.t)} <span class="pg">${g.pg}</span></h3>
+      <div class="chips">${g.ids.map(id => {
+        const w = WORDS[id];
+        return `<button class="wchip ${hasSticker(id) ? "got" : ""}" onclick="speak(${esc(JSON.stringify(w.en))});toast(${esc(JSON.stringify(w.en + " = " + w.cs))})">${pic(w.p, 30)}${esc(w.en)}</button>`;
+      }).join("")}</div>
+    </div>`).join("")}
+  `;
+  window.scrollTo(0, 0);
+}
+
+/* ==========================================================================
+   SESSION RUNNER — one engine for unit modes and the daily mix
+   Task: { type: listen|read|tf|spell|sentence, id?, sent?, unit }
+   ========================================================================== */
+let S = null;
+
+function startMode(uid, mode) {
+  const u = UNIT[uid];
+  st.started[uid] = true; save();
+  if (mode === "cards") return startCards(uid);
+  let tasks;
+  if (mode === "sentence") {
+    tasks = shuffle(sentencesOf(u)).slice(0, 8).map(s => ({ type: "sentence", sent: s, unit: uid }));
+  } else {
+    let ids = u.words.filter(id => mode === "spell" ? canSpell(WORDS[id]) : mode === "tf" ? canTF(WORDS[id]) : true);
+    // weakest words first, then the rest randomly
+    ids = shuffle(ids).sort((a, b) => box(a) - box(b));
+    tasks = shuffle(ids.slice(0, 10)).map(id => ({ type: mode, id, unit: uid }));
+  }
+  runSession(tasks, { kind: "unit", unit: uid, mode });
+}
+
+function sentencesOf(u) {
+  const list = u.sentences.slice();
+  if (u.id === "hello" && st.name) list.push(["I'm " + st.name + ".", "Já jsem " + st.name + ".", "🙋‍♀️"]);
+  return list;
+}
+
+function startDaily() {
+  const t = today();
+  const pool = new Set(UNIT[st.cur].words);
+  for (const uid in st.started) if (st.started[uid] && UNIT[uid]) UNIT[uid].words.forEach(id => pool.add(id));
+  const all = [...pool];
+  const seen = all.filter(id => ws(id));
+  const due = shuffle(seen.filter(id => ws(id).d <= t))
+    .sort((a, b) => (ws(a).b - ws(b).b) || (ws(b).bad - ws(a).bad));
+  const fresh = UNIT[st.cur].words.filter(id => !ws(id)).concat(all.filter(id => !ws(id) && !UNIT[st.cur].words.includes(id)));
+  let pick = due.slice(0, 6);
+  for (const id of fresh) { if (pick.length >= 8) break; pick.push(id); }
+  for (const id of due.slice(6)) { if (pick.length >= 8) break; pick.push(id); }
+  for (const id of shuffle(seen)) { if (pick.length >= 8) break; if (!pick.includes(id)) pick.push(id); }
+  for (const id of shuffle(all)) { if (pick.length >= 8) break; if (!pick.includes(id)) pick.push(id); }
+
+  const tasks = shuffle(pick).map(id => {
+    const w = WORDS[id], b = box(id);
+    let type = b === 0 ? "listen" : b === 1 ? rnd(["listen", "read"]) : b === 2 ? rnd(["read", "tf", "spell"]) : rnd(["spell", "tf", "spell"]);
+    if (type === "spell" && !canSpell(w)) type = "read";
+    if (type === "tf" && !canTF(w)) type = "listen";
+    return { type, id, unit: unitOf(id).id };
+  });
+  // two sentences from the units she is working on
+  const sUnits = [st.cur].concat(Object.keys(st.started).filter(k => st.started[k] && k !== st.cur));
+  const sents = shuffle(sUnits.flatMap(uid => sentencesOf(UNIT[uid]).map(s => ({ s, uid }))));
+  sents.slice(0, 2).forEach((x, i) => tasks.splice(i === 0 ? 4 : tasks.length, 0, { type: "sentence", sent: x.s, unit: x.uid }));
+  runSession(tasks, { kind: "daily" });
+}
+
+function runSession(tasks, meta) {
+  S = { tasks, i: 0, ok: 0, stars: 0, meta, newStickers: [], locked: false };
+  renderTask();
+}
+
+function sessionTop() {
+  const pct = Math.round(S.i / S.tasks.length * 100);
+  return `<div class="topbar">
+    <button class="icon-btn" onclick="quitSession()">✕</button>
+    <div class="progress"><i style="width:${pct}%"></i></div>
+    <span class="badge">⭐ ${st.stars}</span>
+  </div>`;
+}
+function coach(en, cs, mood) {
+  return `<div class="coach"><div id="coachCat" class="${mood || ""}">${panglina(70)}</div>
+    <div class="say" id="coachSay">${esc(en)}<small>${esc(cs)}</small></div></div>`;
+}
+function setCoach(en, cs, mood) {
+  const c = document.getElementById("coachCat"), s = document.getElementById("coachSay");
+  if (s) s.innerHTML = `${esc(en)}<small>${esc(cs)}</small>`;
+  if (c) { c.className = ""; void c.offsetWidth; c.className = mood || ""; }
+}
+function quitSession() {
+  if (S && S.i > 0 && !confirm("Opravdu skončit? Hvězdičky, které už máš, ti zůstanou.")) return;
+  const m = S && S.meta;
+  S = null;
+  if (m && m.kind === "unit") openUnit(m.unit); else renderHome();
+}
+
+function renderTask() {
+  const T = S.tasks[S.i];
+  S.locked = false;
+  S.tries = 0;
+  S.hinted = false;
+  ({ listen: renderChoice, read: renderChoice, tf: renderTF, spell: renderSpell, sentence: renderSentence })[T.type](T);
+  window.scrollTo(0, 0);
+}
+
+/* ---- correct / wrong / next ---- */
+function good(points, sayText) {
+  S.ok++;
+  S.stars += points;
+  st.stars += points;
+  save();
+  sfx.ok();
+  const p = rnd(PRAISE);
+  setCoach(p[0], p[1] + "  +" + points + " ⭐", "cat-happy");
+  S.locked = true;
+  speak(sayText, () => setTimeout(next, 350));
+}
+function bad(sayText) {
+  sfx.bad();
+  const o = rnd(OOPS);
+  setCoach(o[0], o[1], "cat-sad");
+  S.locked = true;
+  speak(sayText);
+  const nx = document.getElementById("nextWrap");
+  if (nx) nx.innerHTML = `<button class="btn wide" onclick="next()">Dál ➜</button>`;
+}
+function next() {
+  if (!S) return;
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  S.i++;
+  if (S.i >= S.tasks.length) return finishSession();
+  renderTask();
+}
+
+/* ---- Listen / Read: pick the picture ---- */
+function distractors(id, n) {
+  const w = WORDS[id], u = unitOf(id);
+  const okFor = c => c !== id && WORDS[c].p !== w.p && WORDS[c].en !== w.en && !(WORDS[c].p.includes(w.p) || w.p.includes(WORDS[c].p));
+  let c = shuffle(UNIT[S.tasks[S.i].unit].words.filter(okFor));
+  if (c.length < n) c = c.concat(shuffle(Object.keys(WORDS).filter(x => okFor(x) && !c.includes(x))));
+  return c.slice(0, n);
+}
+function renderChoice(T) {
+  const w = WORDS[T.id];
+  S.opts = shuffle([T.id].concat(distractors(T.id, 3)));
+  const listen = T.type === "listen";
+  $view.innerHTML = sessionTop() + coach(listen ? "Listen and tap!" : "Read and tap!", listen ? "Poslouchej a ťukni na správný obrázek." : "Přečti slovo a ťukni na obrázek.") + `
+    <div class="card prompt anim-in">
+      ${listen
+        ? `<button class="speaker" onclick="speak(${esc(JSON.stringify(w.en))})">🔊</button><div class="q" style="margin:10px 0 0">Ťukni na reproduktor a poslechni si to znovu</div>`
+        : `<div class="q">Co je to?</div><div class="word">${esc(w.en)}</div>`}
+    </div>
+    <div class="opts">
+      ${S.opts.map((id, i) => `<button class="opt" id="opt${i}" onclick="pick(${i})">${pic(WORDS[id].p, 96)}</button>`).join("")}
+    </div>
+    <div class="next-wrap" id="nextWrap"></div>`;
+  if (listen) setTimeout(() => speak(w.en), 250);
+}
+function pick(i) {
+  if (S.locked) return;
+  const T = S.tasks[S.i], w = WORDS[T.id], right = S.opts[i] === T.id;
+  S.opts.forEach((id, k) => {
+    const el = document.getElementById("opt" + k);
+    if (id === T.id) { el.classList.add("right"); el.insertAdjacentHTML("beforeend", `<span class="lbl">${esc(w.en)}</span>`); }
+    else if (k === i) { el.classList.add("wrong", "shake"); el.insertAdjacentHTML("beforeend", `<span class="lbl">${esc(WORDS[id].en)}</span>`); }
+    else el.classList.add("dim");
+  });
+  record(T.id, right);
+  if (right) good(1, w.en); else bad(w.en);
+}
+
+/* ---- Yes / No ---- */
+function renderTF(T) {
+  const w = WORDS[T.id], u = UNIT[T.unit];
+  const truth = Math.random() < 0.5;
+  let shown = w;
+  if (!truth) {
+    const others = shuffle(u.words.filter(id => id !== w.id && canTF(WORDS[id]) && WORDS[id].p !== w.p && (WORDS[id].a === "ph") === (w.a === "ph")));
+    if (others.length) shown = WORDS[others[0]]; else shown = w;
+  }
+  S.tf = { truth: shown === w, text: statement(shown, u) };
+  $view.innerHTML = sessionTop() + coach("Yes or no?", "Poslouchej. Je to pravda?") + `
+    <div class="card tf-pic anim-in">
+      ${pic(w.p, 150)}
+      <div class="tf-say"><button class="speaker sm" onclick="speak(S.tf.text)">🔊</button><span>${esc(S.tf.text)}</span></div>
+    </div>
+    <div class="tf-btns" id="tfBtns">
+      <button class="btn green" onclick="answerTF(true)">✔ Yes</button>
+      <button class="btn red" onclick="answerTF(false)">✘ No</button>
+    </div>
+    <div class="next-wrap" id="nextWrap"></div>`;
+  const say = S.tf.text;
+  setTimeout(() => { if (S && S.tf && S.tf.text === say) speak(say); }, 250);
+}
+function answerTF(yes) {
+  if (S.locked) return;
+  const T = S.tasks[S.i], w = WORDS[T.id], u = UNIT[T.unit];
+  const right = yes === S.tf.truth;
+  const correct = statement(w, u);
+  document.getElementById("tfBtns").innerHTML = `<div class="card" style="grid-column:1/-1;padding:14px;text-align:center;font-size:22px;font-weight:900">
+    ${S.tf.truth ? "✔ Ano, je to pravda." : "✘ Ne. Správně je:"}<div style="color:var(--green-dk);margin-top:4px">${esc(correct)}</div></div>`;
+  record(T.id, right);
+  if (right) good(1, correct); else bad(correct);
+}
+
+/* ---- Spell with letter tiles ---- */
+function renderSpell(T) {
+  const w = WORDS[T.id];
+  const chars = [...w.en];
+  const letters = chars.map((c, k) => ({ c, k })).filter(x => x.c !== "-");
+  let tiles = shuffle(letters.map(x => x.c));
+  if (tiles.join("") === letters.map(x => x.c).join("") && tiles.length > 1) tiles = shuffle(tiles);
+  S.sp = { chars, tiles: tiles.map(c => ({ c, used: false })), slots: chars.map(c => c === "-" ? "fixed" : null), marks: {} };
+  $view.innerHTML = sessionTop() + coach("Spell the word!", "Poskládej slovo z písmenek.") + `
+    <div class="card prompt anim-in">
+      <div class="row" style="justify-content:center;gap:18px">${pic(w.p, 110)}<button class="speaker sm" onclick="speak(${esc(JSON.stringify(w.en))})">🔊</button></div>
+      <div class="cs">${esc(w.cs)}</div>
+    </div>
+    <div class="slots" id="slots"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="tools" id="tools">
+      <button class="btn ghost small" onclick="spellHint()">💡 Nápověda</button>
+      <button class="btn ghost small" onclick="spellBack()">⌫ Zpět</button>
+    </div>
+    <div class="next-wrap" id="nextWrap"></div>`;
+  drawSpell();
+  setTimeout(() => speak(w.en), 250);
+}
+function drawSpell() {
+  const sp = S.sp;
+  const nextK = sp.slots.indexOf(null);
+  document.getElementById("slots").innerHTML = sp.chars.map((c, k) => {
+    if (sp.slots[k] === "fixed") return `<span class="slot fixed">-</span>`;
+    const t = sp.slots[k];
+    const cls = ["slot", t !== null ? "filled" : "", k === nextK ? "next" : "", sp.marks[k] || ""].join(" ");
+    return `<button class="${cls}" onclick="spellSlot(${k})">${t !== null ? esc(sp.tiles[t].c) : ""}</button>`;
+  }).join("");
+  document.getElementById("tiles").innerHTML = sp.tiles.map((t, i) =>
+    `<button class="tile ${t.used ? "used" : ""}" onclick="spellTile(${i})">${esc(t.c)}</button>`).join("");
+}
+function spellTile(i) {
+  if (S.locked) return;
+  const sp = S.sp, k = sp.slots.indexOf(null);
+  if (k < 0 || sp.tiles[i].used) return;
+  sfx.tap();
+  sp.slots[k] = i; sp.tiles[i].used = true; sp.marks = {};
+  drawSpell();
+  if (sp.slots.indexOf(null) < 0) checkSpell();
+}
+function spellSlot(k) {
+  if (S.locked) return;
+  const sp = S.sp, t = sp.slots[k];
+  if (t === null || t === "fixed") return;
+  sp.tiles[t].used = false; sp.slots[k] = null; sp.marks = {};
+  drawSpell();
+}
+function spellBack() {
+  if (S.locked) return;
+  const sp = S.sp;
+  for (let k = sp.slots.length - 1; k >= 0; k--) if (sp.slots[k] !== null && sp.slots[k] !== "fixed") return spellSlot(k);
+}
+function spellHint() {
+  if (S.locked) return;
+  const sp = S.sp;
+  S.hinted = true;
+  // first position that is empty or wrong
+  const k = sp.chars.findIndex((c, k) => sp.slots[k] !== "fixed" && (sp.slots[k] === null || sp.tiles[sp.slots[k]].c !== c));
+  if (k < 0) return;
+  if (sp.slots[k] !== null) { sp.tiles[sp.slots[k]].used = false; sp.slots[k] = null; }
+  let t = sp.tiles.findIndex(x => !x.used && x.c === sp.chars[k]);
+  if (t < 0) { // the right letter sits in a later slot: take it back from there
+    const k2 = sp.slots.findIndex((s, j) => j > k && s !== null && s !== "fixed" && sp.tiles[s].c === sp.chars[k]);
+    if (k2 >= 0) { t = sp.slots[k2]; sp.slots[k2] = null; sp.tiles[t].used = false; }
+  }
+  if (t < 0) return;
+  sp.slots[k] = t; sp.tiles[t].used = true; sp.marks = { [k]: "ok" };
+  drawSpell();
+  if (sp.slots.indexOf(null) < 0) checkSpell();
+}
+function checkSpell() {
+  const T = S.tasks[S.i], w = WORDS[T.id], sp = S.sp;
+  const wrong = sp.chars.map((c, k) => sp.slots[k] !== "fixed" && sp.tiles[sp.slots[k]].c !== c ? k : -1).filter(k => k >= 0);
+  if (!wrong.length) {
+    sp.marks = Object.fromEntries(sp.chars.map((c, k) => [k, "ok"]));
+    drawSpell();
+    document.getElementById("tools").innerHTML = "";
+    const clean = S.tries === 0 && !S.hinted;
+    if (S.tries === 0) record(T.id, clean);
+    return good(clean ? 2 : 1, w.en);
+  }
+  S.tries++;
+  if (S.tries === 1) record(T.id, false);
+  sfx.bad();
+  setCoach("Almost!", "Červená písmenka nejsou správně. Zkus to znovu.", "cat-sad");
+  sp.marks = Object.fromEntries(wrong.map(k => [k, "bad"]));
+  drawSpell();
+  if (S.tries >= 3) {
+    // show the answer
+    S.locked = true;
+    setTimeout(() => {
+      if (!S || S.sp !== sp) return;
+      sp.tiles.forEach(t => t.used = true);
+      document.getElementById("slots").innerHTML = sp.chars.map(c => c === "-" ? `<span class="slot fixed">-</span>` : `<span class="slot ok">${esc(c)}</span>`).join("");
+      document.getElementById("tiles").innerHTML = "";
+      document.getElementById("tools").innerHTML = "";
+      bad(w.en);
+    }, 700);
+    return;
+  }
+  S.locked = true;
+  setTimeout(() => {
+    if (!S || S.sp !== sp) return;
+    wrong.forEach(k => { sp.tiles[sp.slots[k]].used = false; sp.slots[k] = null; });
+    sp.marks = {};
+    S.locked = false;
+    drawSpell();
+  }, 900);
+}
+
+/* ---- Build a sentence from word chips ---- */
+function renderSentence(T) {
+  const [en, cs, p] = T.sent;
+  const m = en.match(/^(.*?)([.?!]*)$/);
+  const words = m[1].split(" ");
+  let order = shuffle(words.map((_, i) => i));
+  if (words.length > 1 && order.every((v, i) => v === i)) order = order.reverse();
+  S.se = { en, words, punct: m[2], pool: order.map(i => ({ w: words[i], used: false })), line: [], bad: {} };
+  $view.innerHTML = sessionTop() + coach("Make a sentence!", "Poskládej anglickou větu.") + `
+    <div class="card prompt anim-in">
+      <div style="margin-bottom:6px">${pic(p, 84)}</div>
+      <div style="font-size:24px;font-weight:900">${esc(cs)}</div>
+    </div>
+    <div class="sent-line" id="sline"></div>
+    <div class="tiles" id="spool"></div>
+    <div class="tools" id="tools">
+      <button class="btn ghost small" onclick="S.hinted=true;speak(S.se.en)">🔊 Nápověda</button>
+      <button class="btn ghost small" onclick="sentBack()">⌫ Zpět</button>
+    </div>
+    <div class="next-wrap" id="nextWrap"></div>`;
+  drawSentence();
+}
+function drawSentence() {
+  const se = S.se;
+  const done = se.line.length === se.words.length;
+  document.getElementById("sline").innerHTML = se.line.length
+    ? se.line.map((pi, k) => `<button class="chip in ${se.bad[k] ? "bad" : ""}" onclick="sentRemove(${k})">${esc(se.pool[pi].w)}</button>`).join("") + (done ? `<span class="punct">${esc(se.punct)}</span>` : "")
+    : `<span class="muted" style="font-weight:800">Ťukej na slova ve správném pořadí 👇</span>`;
+  document.getElementById("spool").innerHTML = se.pool.map((c, i) =>
+    `<button class="chip ${c.used ? "used" : ""}" onclick="sentAdd(${i})">${esc(c.w)}</button>`).join("");
+}
+function sentAdd(i) {
+  if (S.locked || S.se.pool[i].used) return;
+  sfx.tap();
+  S.se.pool[i].used = true; S.se.line.push(i); S.se.bad = {};
+  drawSentence();
+  if (S.se.line.length === S.se.words.length) checkSentence();
+}
+function sentRemove(k) {
+  if (S.locked) return;
+  const se = S.se;
+  se.line.splice(k).forEach(pi => se.pool[pi].used = false);
+  se.bad = {};
+  drawSentence();
+}
+function sentBack() { if (!S.locked && S.se.line.length) sentRemove(S.se.line.length - 1); }
+function checkSentence() {
+  const se = S.se;
+  const firstBad = se.line.findIndex((pi, k) => se.pool[pi].w !== se.words[k]);
+  if (firstBad < 0) {
+    document.getElementById("sline").classList.add("ok");
+    document.getElementById("tools").innerHTML = "";
+    st.sentOk++;
+    return good(S.tries === 0 && !S.hinted ? 2 : 1, se.en);
+  }
+  S.tries++;
+  sfx.bad();
+  se.bad = {}; for (let k = firstBad; k < se.line.length; k++) se.bad[k] = true;
+  drawSentence();
+  if (S.tries >= 3) {
+    S.locked = true;
+    setTimeout(() => {
+      if (!S || S.se !== se) return;
+      document.getElementById("sline").innerHTML = se.words.map(w => `<span class="chip in">${esc(w)}</span>`).join("") + `<span class="punct">${esc(se.punct)}</span>`;
+      document.getElementById("spool").innerHTML = "";
+      document.getElementById("tools").innerHTML = "";
+      bad(se.en);
+    }, 800);
+    return;
+  }
+  setCoach("Almost!", "Od červeného slova to není správně. Zkus to znovu.", "cat-sad");
+  S.locked = true;
+  setTimeout(() => { if (!S || S.se !== se) return; S.locked = false; sentRemove(firstBad); }, 1000);
+}
+
+/* ---- Session end ---- */
+function finishSession() {
+  const m = S.meta, n = S.tasks.length;
+  const stars = starsFor(S.ok, n);
+  const t = today();
+  if (m.kind === "unit") {
+    const k = m.unit + ":" + m.mode;
+    if (stars > (st.best[k] || 0)) st.best[k] = stars;
+  } else {
+    if (st.dailyLast !== t) {
+      st.streak = { n: st.streak.last === t - 1 ? st.streak.n + 1 : 1, last: t };
+      st.dailyLast = t;
+    }
+  }
+  save();
+  if (stars >= 2) { sfx.win(); confetti(stars === 3 ? 90 : 45); }
+  const msg = stars === 3 ? ["Amazing!", "Úžasné, skoro všechno správně!"] : stars === 2 ? ["Great job!", "Moc pěkné!"] : stars === 1 ? ["Good try!", "Dobrý pokus, příště to bude ještě lepší."] : ["Let's practise more!", "Zkusíme to znovu? Panglina ti pomůže."];
+  const stickers = [...new Set(S.newStickers)];
+  $view.innerHTML = `
+    <div class="card result anim-in">
+      <div class="cat-happy" style="display:inline-block">${panglina(130)}</div>
+      <h1 style="margin-top:6px">${msg[0]}</h1>
+      <div class="muted" style="font-weight:800;font-size:18px">${msg[1]}</div>
+      <div class="stars pop">${starStr(stars)}</div>
+      <div class="score">${S.ok} z ${n} správně · +${S.stars} ⭐</div>
+      ${m.kind === "daily" ? `<div class="muted" style="font-weight:800;margin-top:6px">🔥 ${st.streak.n} ${st.streak.n === 1 ? "den" : st.streak.n < 5 ? "dny" : "dní"} v řadě</div>` : ""}
+      ${stickers.length ? `<h3 style="margin-top:18px">🏅 Nové samolepky do alba!</h3>
+        <div class="newst">${stickers.map(id => `<div class="sticker pop">${pic(WORDS[id].p, 44)}<span>${esc(WORDS[id].en)}</span></div>`).join("")}</div>` : ""}
+      <div style="display:flex;gap:12px;margin-top:22px">
+        <button class="btn ghost" style="flex:1" onclick="${m.kind === "unit" ? `startMode('${m.unit}','${m.mode}')` : "startDaily()"}">🔁 Znovu</button>
+        <button class="btn" style="flex:1" onclick="${m.kind === "unit" ? `openUnit('${m.unit}')` : "renderHome()"}">${m.kind === "unit" ? "Zpět na lekci" : "Domů"} ➜</button>
+      </div>
+    </div>`;
+  if (stickers.length) setTimeout(() => speak("Well done! New stickers!"), 300);
+  S = null;
+}
+
+/* ==========================================================================
+   FLASHCARDS
+   ========================================================================== */
+let FC = null;
+function startCards(uid) {
+  const u = UNIT[uid];
+  const items = u.words.map(id => ({ w: WORDS[id] })).concat(u.phrases.map(p => ({ ph: p })));
+  FC = { uid, items, i: 0 };
+  drawCard();
+}
+function drawCard() {
+  const it = FC.items[FC.i], u = UNIT[FC.uid];
+  const en = it.w ? it.w.en : it.ph[0];
+  const cs = it.w ? it.w.cs : it.ph[1];
+  const ex = it.w ? exampleFor(it.w, u) : "";
+  $view.innerHTML = `
+    <div class="topbar">
+      <button class="icon-btn" onclick="FC=null;openUnit('${FC.uid}')">✕</button>
+      <div class="progress"><i style="width:${Math.round((FC.i + 1) / FC.items.length * 100)}%"></i></div>
+      <span class="badge">${FC.i + 1} / ${FC.items.length}</span>
+    </div>
+    <div class="fc" id="fc" onclick="flipCard()">
+      <div class="fc-in">
+        <div class="fc-face">
+          ${it.w ? pic(it.w.p, 150) : `<span style="font-size:70px">💬</span>`}
+          <div class="en" style="${it.w ? "" : "font-size:32px"}">${esc(en)}</div>
+          <div class="hint">ťukni a otoč kartičku</div>
+        </div>
+        <div class="fc-face fc-back">
+          <div class="csw" style="${it.w ? "" : "font-size:28px"}">${esc(cs)}</div>
+          ${ex ? `<div class="ex">„${esc(ex)}“</div>` : ""}
+          ${it.w && hasSticker(it.w.id) ? `<div style="font-weight:800;color:var(--green-dk)">🏅 Tohle slovo už umíš!</div>` : ""}
+        </div>
+      </div>
+    </div>
+    <div class="row" style="justify-content:center;gap:18px">
+      <button class="icon-btn" style="width:76px;height:76px;font-size:34px;${FC.i === 0 ? "opacity:.35" : ""}" onclick="moveCard(-1)">◀</button>
+      <button class="speaker" onclick="speak(${esc(JSON.stringify(en))})">🔊</button>
+      <button class="icon-btn" style="width:76px;height:76px;font-size:34px" onclick="moveCard(1)">${FC.i === FC.items.length - 1 ? "✔" : "▶"}</button>
+    </div>`;
+  setTimeout(() => speak(en), 200);
+}
+function flipCard() {
+  const el = document.getElementById("fc");
+  el.classList.toggle("flip");
+  const it = FC.items[FC.i];
+  if (!el.classList.contains("flip")) speak(it.w ? it.w.en : it.ph[0]);
+  else if (it.w) { const ex = exampleFor(it.w, UNIT[FC.uid]); if (ex) speak(ex); }
+}
+function moveCard(d) {
+  const n = FC.i + d;
+  if (n < 0) return;
+  if (n >= FC.items.length) {
+    confetti(40); sfx.win();
+    toast("Hotovo! Teď zkus nějakou hru. 🎉");
+    const uid = FC.uid; FC = null; return openUnit(uid);
+  }
+  FC.i = n; drawCard();
+}
+
+/* ==========================================================================
+   ALBUM — sticker for every word known on 3 different days
+   ========================================================================== */
+function renderAlbum() {
+  const total = Object.keys(WORDS).length, have = stickerCount();
+  $view.innerHTML = `
+    <div class="topbar">
+      <button class="icon-btn" onclick="renderHome()">←</button>
+      <h2 style="flex:1">📒 Album samolepek</h2>
+      <span class="badge">🏅 ${have}/${total}</span>
+    </div>
+    <div class="card section" style="display:flex;gap:12px;align-items:center">
+      ${panglina(64)}
+      <div style="font-weight:800;font-size:16px">Samolepku dostaneš, když slovo umíš <b>3 různé dny</b>. Tečky ukazují, kolik dní už máš: <span class="dots">●●○</span></div>
+    </div>
+    ${UNITS.map(u => `<div class="card section">
+      <h3><span>${u.icon}</span> ${u.title} <span class="pg">${stickerCount(u.words)}/${u.words.length}</span></h3>
+      <div class="album-grid">${u.words.map(id => {
+        const w = WORDS[id], b = Math.min(box(id), STICKER_BOX), got = b >= STICKER_BOX;
+        return `<button class="sticker ${got ? "" : "locked"}" onclick="speak(${esc(JSON.stringify(w.en))});toast(${esc(JSON.stringify(w.en + " = " + w.cs))})">
+          ${pic(w.p, 46)}<span>${got ? esc(w.en) : "?"}</span>
+          ${got ? "" : `<span class="dots">${"●".repeat(b)}${"○".repeat(STICKER_BOX - b)}</span>`}</button>`;
+      }).join("")}</div></div>`).join("")}
+  `;
+  window.scrollTo(0, 0);
+}
+
+/* ==========================================================================
+   PARENT VIEW
+   ========================================================================== */
+function renderParent() {
+  const seen = Object.keys(st.words).filter(id => WORDS[id]);
+  const answers = seen.reduce((s, id) => s + ws(id).ok + ws(id).bad, 0);
+  const weak = seen.filter(id => ws(id).bad > 0)
+    .sort((a, b) => (ws(b).bad - ws(b).ok / 2) - (ws(a).bad - ws(a).ok / 2)).slice(0, 12);
+  const vname = enVoice ? enVoice.name + " (" + enVoice.lang + ")" : "zatím nenačten";
+  $view.innerHTML = `
+    <div class="topbar">
+      <button class="icon-btn" onclick="renderHome()">←</button>
+      <h2 style="flex:1">👪 Pro rodiče</h2>
+    </div>
+    <div class="card section">
+      <h3>📊 Přehled</h3>
+      <div class="stat-grid">
+        <div class="stat"><b>${stickerCount()}/${Object.keys(WORDS).length}</b><span>slov umí (samolepky)</span></div>
+        <div class="stat"><b>${seen.length}</b><span>slov už viděla</span></div>
+        <div class="stat"><b>${st.days.length}</b><span>dní procvičování</span></div>
+        <div class="stat"><b>${answers}</b><span>odpovědí celkem</span></div>
+      </div>
+    </div>
+    <div class="card section">
+      <h3>🎯 Slova k procvičení</h3>
+      ${weak.length ? weak.map(id => { const w = WORDS[id], s = ws(id); return `<div class="weak">${pic(w.p, 36)}
+        <div class="w">${esc(w.en)}<small>${esc(w.cs)} · ${unitOf(id).title}</small></div>
+        <span style="font-weight:800">✔ ${s.ok} · <span style="color:var(--red)">✘ ${s.bad}</span></span>
+        <button class="icon-btn" style="width:44px;height:44px;font-size:20px" onclick="speak(${esc(JSON.stringify(w.en))})">🔊</button></div>`; }).join("")
+        : `<div class="muted" style="font-weight:700">Zatím žádné chyby. 👍</div>`}
+    </div>
+    <div class="card section">
+      <h3>⚙️ Nastavení</h3>
+      <div class="field"><label>Jméno</label><input id="pName" value="${esc(st.name)}" maxlength="20" onchange="st.name=this.value.trim()||'Laura';save()"></div>
+      <div class="field"><label>Kde jsou ve škole (Dnešní výprava bere slova odsud a z lekcí, které už otevřela)</label>
+        <select onchange="st.cur=this.value;st.started[this.value]=true;save()">
+          ${UNITS.map(u => `<option value="${u.id}" ${u.id === st.cur ? "selected" : ""}>${u.title} – ${u.cs}${u.id === "fest" ? "" : " (str. " + u.pages + ")"}</option>`).join("")}
+        </select></div>
+      <div class="field"><label>Rychlost řeči</label>
+        <div class="seg">
+          <button class="${st.rate >= 0.85 ? "on" : ""}" onclick="st.rate=0.85;save();renderParent();speak('Hello! I am Panglina.')">Normální</button>
+          <button class="${st.rate < 0.85 ? "on" : ""}" onclick="st.rate=0.7;save();renderParent();speak('Hello! I am Panglina.')">Pomalejší</button>
+        </div></div>
+      <div class="field"><label>Zvuky</label>
+        <div class="seg">
+          <button class="${st.sound ? "on" : ""}" onclick="st.sound=true;save();renderParent();sfx.ok()">Zapnuté</button>
+          <button class="${!st.sound ? "on" : ""}" onclick="st.sound=false;save();renderParent()">Vypnuté</button>
+        </div></div>
+      <div class="field"><label>Anglický hlas</label>
+        <div class="row"><span style="flex:1;font-weight:800">${esc(vname)}</span>
+        <button class="btn ghost small" onclick="speak('torch, jumper, trousers, binoculars')">🔊 Vyzkoušet</button></div>
+        <div class="muted" style="font-size:14px;font-weight:700;line-height:1.4">Učebnice je britská. Nejlépe zní hlas <b>Daniel</b> nebo <b>Martha</b> (angličtina – Velká Británie). Na iPadu ho stáhnete v Nastavení → Zpřístupnění → Předčítaný obsah → Hlasy → Angličtina. Verze „Vylepšená“ zní přirozeněji.</div>
+      </div>
+    </div>
+    <div class="card section">
+      <h3>🗑️ Smazat pokrok</h3>
+      <p class="muted" style="font-weight:700;margin-bottom:10px">Smaže hvězdičky, samolepky i historii na tomto zařízení.</p>
+      <button class="btn red small" onclick="if(confirm('Opravdu smazat všechen pokrok?')){const n=st.name;st=defaults();st.name=n;save();renderHome();}">Smazat pokrok</button>
+    </div>`;
+  window.scrollTo(0, 0);
+}
+
+/* ==========================================================================
+   HOME-SCREEN ICON (generated, so the file stays self-contained)
+   ========================================================================== */
+(function makeIcon() {
+  try {
+    const c = document.createElement("canvas"); c.width = c.height = 180;
+    const g = c.getContext("2d");
+    g.fillStyle = "#f08a24"; g.fillRect(0, 0, 180, 180);
+    g.font = "110px -apple-system, 'Apple Color Emoji', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText("🐱", 90, 98);
+    const l = document.createElement("link"); l.rel = "apple-touch-icon"; l.href = c.toDataURL("image/png");
+    document.head.appendChild(l);
+  } catch (e) {}
+})();
+
+renderHome();
+</script>
+</body>
+</html>
