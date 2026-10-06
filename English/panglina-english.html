@@ -176,6 +176,19 @@
   .mode .mt { font-size: 17px; font-weight: 900; line-height: 1.1; }
   .mode .ms { font-size: 13px; color: var(--muted); font-weight: 700; }
   .mode .st { font-size: 16px; letter-spacing: 1px; }
+  .mode.wide { grid-column: 1 / -1; flex-direction: row; min-height: 84px; gap: 14px; }
+
+  /* on-screen keyboard for "Napiš slovo" (no iOS autocorrect, no Czech layout) */
+  .kb { background: #f3e3cc; border-radius: 20px; padding: 10px 6px; margin-top: 4px; display: flex; flex-direction: column; gap: 8px; }
+  .kb-row { display: flex; justify-content: center; gap: 6px; }
+  .key {
+    flex: 0 1 64px; min-width: 0; height: 62px; border-radius: 12px; background: #fff;
+    font-size: 28px; font-weight: 900; box-shadow: 0 4px 0 #d9bf98;
+  }
+  .key:active { transform: translateY(2px); box-shadow: 0 2px 0 #d9bf98; background: #fff3dd; }
+  .key.wide { flex: 0 1 96px; font-size: 24px; }
+  .key.ok { flex: 0 1 230px; background: var(--green); color: #fff; box-shadow: 0 4px 0 var(--green-dk); font-size: 22px; }
+  .key.ok:disabled { opacity: .4; }
   .section { padding: 16px; margin-bottom: 14px; }
   .section h3 { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
   .section h3 .pg { font-size: 14px; color: var(--muted); font-weight: 700; }
@@ -320,6 +333,11 @@
     .tile { width: 52px; height: 58px; font-size: 28px; }
     .chip { font-size: 20px; padding: 8px 11px; }
     .fc { height: 320px; }
+    .kb { padding: 8px 4px; }
+    .kb-row { gap: 4px; }
+    .key { height: 50px; font-size: 22px; border-radius: 10px; }
+    .key.wide { font-size: 20px; }
+    .key.ok { font-size: 18px; }
     h1 { font-size: 26px; }
   }
 </style>
@@ -892,6 +910,7 @@ function statement(w, u) {
 function unitOf(id) { return UNITS.find(u => u.words.includes(id)) || UNITS[0]; }
 function exampleFor(w, u) { return w.ex || (w.a === "-" ? "" : statement(w, u || unitOf(w.id))); }
 const canSpell = w => /^[A-Za-z-]+$/.test(w.en) && w.en.length <= 11;
+const canWrite = w => w.a !== "ph" && /^[A-Za-z -]+$/.test(w.en) && w.en.length <= 14;
 const canTF = w => w.a !== "-";
 
 const PRAISE = [
@@ -974,6 +993,7 @@ const MODES = [
   { id: "listen", icon: "👂", t: "Poslouchej", s: "ťukni na obrázek" },
   { id: "read", icon: "📖", t: "Přečti", s: "najdi obrázek" },
   { id: "spell", icon: "🔤", t: "Skládej slovo", s: "z písmenek" },
+  { id: "write", icon: "✏️", t: "Napiš slovo", s: "na klávesnici" },
   { id: "sentence", icon: "🧩", t: "Skládej větu", s: "ze slov" },
   { id: "tf", icon: "✅", t: "Ano, nebo ne?", s: "je to pravda?" },
 ];
@@ -995,7 +1015,7 @@ function openUnit(uid) {
     <div class="modes">
       ${MODES.map(m => {
         const b = st.best[u.id + ":" + m.id] || 0;
-        return `<button class="mode" onclick="startMode('${u.id}','${m.id}')">
+        return `<button class="mode ${m.id === "cards" ? "wide" : ""}" onclick="startMode('${u.id}','${m.id}')">
           <span class="mi">${m.icon}</span><span class="mt">${m.t}</span><span class="ms">${m.s}</span>
           ${m.id === "cards" ? "" : `<span class="st">${starStr(b)}</span>`}
         </button>`;
@@ -1031,7 +1051,8 @@ function startMode(uid, mode) {
   if (mode === "sentence") {
     tasks = shuffle(sentencesOf(u)).slice(0, 8).map(s => ({ type: "sentence", sent: s, unit: uid }));
   } else {
-    let ids = u.words.filter(id => mode === "spell" ? canSpell(WORDS[id]) : mode === "tf" ? canTF(WORDS[id]) : true);
+    const ok = { spell: canSpell, write: canWrite, tf: canTF }[mode] || (() => true);
+    let ids = u.words.filter(id => ok(WORDS[id]));
     // weakest words first, then the rest randomly
     ids = shuffle(ids).sort((a, b) => box(a) - box(b));
     tasks = shuffle(ids.slice(0, 10)).map(id => ({ type: mode, id, unit: uid }));
@@ -1062,7 +1083,9 @@ function startDaily() {
 
   const tasks = shuffle(pick).map(id => {
     const w = WORDS[id], b = box(id);
-    let type = b === 0 ? "listen" : b === 1 ? rnd(["listen", "read"]) : b === 2 ? rnd(["read", "tf", "spell"]) : rnd(["spell", "tf", "spell"]);
+    // recognise → assemble → write: the better she knows a word, the harder the task
+    let type = b === 0 ? "listen" : b === 1 ? rnd(["listen", "read"]) : b === 2 ? rnd(["read", "tf", "spell", "write"]) : rnd(["write", "write", "spell", "tf"]);
+    if (type === "write" && !canWrite(w)) type = "spell";
     if (type === "spell" && !canSpell(w)) type = "read";
     if (type === "tf" && !canTF(w)) type = "listen";
     return { type, id, unit: unitOf(id).id };
@@ -1108,7 +1131,8 @@ function renderTask() {
   S.locked = false;
   S.tries = 0;
   S.hinted = false;
-  ({ listen: renderChoice, read: renderChoice, tf: renderTF, spell: renderSpell, sentence: renderSentence })[T.type](T);
+  S.wr = null;
+  ({ listen: renderChoice, read: renderChoice, tf: renderTF, spell: renderSpell, write: renderWrite, sentence: renderSentence })[T.type](T);
   window.scrollTo(0, 0);
 }
 
@@ -1325,6 +1349,119 @@ function checkSpell() {
     drawSpell();
   }, 900);
 }
+
+/* ---- Write the word on the on-screen keyboard (dictation) ---- */
+const KB_ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
+function renderWrite(T) {
+  const w = WORDS[T.id];
+  const chars = [...w.en];
+  const fixed = chars.map(c => c === " " || c === "-");
+  S.wr = { chars, fixed, typed: chars.map((c, k) => fixed[k] ? c : ""), marks: {} };
+  $view.innerHTML = sessionTop() + coach("Write the word!", "Poslechni si slovo a napiš ho.") + `
+    <div class="card prompt anim-in">
+      <div class="row" style="justify-content:center;gap:18px">${pic(w.p, 96)}<button class="speaker sm" onclick="speak(${esc(JSON.stringify(w.en))})">🔊</button></div>
+      <div class="cs">${esc(w.cs)}</div>
+    </div>
+    <div class="slots" id="wslots"></div>
+    <div class="kb" id="kb">
+      ${KB_ROWS.map(r => `<div class="kb-row">${[...r].map(c => `<button class="key" onclick="writeKey('${c}')">${c}</button>`).join("")}</div>`).join("")}
+      <div class="kb-row">
+        <button class="key wide" onclick="writeHint()">💡</button>
+        <button class="key wide" onclick="writeBack()">⌫</button>
+        <button class="key ok" id="wDone" onclick="checkWrite()">✔ Hotovo</button>
+      </div>
+    </div>
+    <div class="next-wrap" id="nextWrap"></div>`;
+  drawWrite();
+  const wr = S.wr;
+  setTimeout(() => { if (S && S.wr === wr) speak(w.en); }, 250);
+}
+function writeNext() { const wr = S.wr; return wr.typed.findIndex((t, k) => !wr.fixed[k] && t === ""); }
+function drawWrite() {
+  const wr = S.wr, nextK = writeNext();
+  document.getElementById("wslots").innerHTML = wr.chars.map((c, k) => {
+    if (c === " ") return `<span class="slot fixed"></span>`;
+    if (c === "-") return `<span class="slot fixed">-</span>`;
+    const cls = ["slot", wr.typed[k] ? "filled" : "", k === nextK ? "next" : "", wr.marks[k] || ""].join(" ");
+    return `<span class="${cls}">${esc(wr.typed[k])}</span>`;
+  }).join("");
+  const done = document.getElementById("wDone");
+  if (done) done.disabled = nextK >= 0;
+}
+function writeKey(c) {
+  if (!S || !S.wr || S.locked) return;
+  const k = writeNext();
+  if (k < 0) return;
+  sfx.tap();
+  S.wr.typed[k] = c;
+  drawWrite();
+}
+function writeBack() {
+  if (!S || !S.wr || S.locked) return;
+  const wr = S.wr;
+  for (let k = wr.chars.length - 1; k >= 0; k--) {
+    if (!wr.fixed[k] && wr.typed[k] !== "") { wr.typed[k] = ""; delete wr.marks[k]; break; }
+  }
+  drawWrite();
+}
+function writeHint() {
+  if (!S || !S.wr || S.locked) return;
+  const wr = S.wr;
+  const k = wr.chars.findIndex((c, k) => !wr.fixed[k] && wr.typed[k] !== c.toLowerCase());
+  if (k < 0) return;
+  S.hinted = true;
+  wr.typed[k] = wr.chars[k].toLowerCase();
+  wr.marks[k] = "ok";
+  drawWrite();
+  if (writeNext() < 0) checkWrite();
+}
+function checkWrite() {
+  if (!S || !S.wr || S.locked || writeNext() >= 0) return;
+  const T = S.tasks[S.i], w = WORDS[T.id], wr = S.wr;
+  // capital letters (Monday, T-shirt) are not required on the keyboard, only pointed out
+  const wrong = wr.chars.map((c, k) => !wr.fixed[k] && wr.typed[k] !== c.toLowerCase() ? k : -1).filter(k => k >= 0);
+  if (!wrong.length) {
+    wr.typed = wr.chars.slice();
+    wr.marks = Object.fromEntries(wr.chars.map((c, k) => [k, "ok"]));
+    drawWrite();
+    document.getElementById("kb").innerHTML = "";
+    const clean = S.tries === 0 && !S.hinted;
+    if (S.tries === 0) record(T.id, clean);
+    good(clean ? 3 : 1, w.en);
+    const cap = w.en.match(/[A-Z]/);
+    if (cap) document.getElementById("coachSay").insertAdjacentHTML("beforeend", `<small>✍️ ${esc(w.en)} se píše s velkým ${cap[0]}.</small>`);
+    return;
+  }
+  S.tries++;
+  if (S.tries === 1) record(T.id, false);
+  sfx.bad();
+  wr.marks = Object.fromEntries(wr.chars.map((c, k) => [k, wrong.includes(k) ? "bad" : "ok"]));
+  drawWrite();
+  if (S.tries >= 3) {
+    S.locked = true;
+    setTimeout(() => {
+      if (!S || S.wr !== wr) return;
+      document.getElementById("wslots").innerHTML = wr.chars.map(c => c === " " ? `<span class="slot fixed"></span>` : c === "-" ? `<span class="slot fixed">-</span>` : `<span class="slot ok">${esc(c)}</span>`).join("");
+      document.getElementById("kb").innerHTML = "";
+      bad(w.en);
+    }, 700);
+    return;
+  }
+  setCoach("Almost!", "Zelená písmenka jsou dobře. Červená napiš znovu.", "cat-sad");
+  S.locked = true;
+  setTimeout(() => {
+    if (!S || S.wr !== wr) return;
+    wrong.forEach(k => { wr.typed[k] = ""; delete wr.marks[k]; });
+    S.locked = false;
+    drawWrite();
+  }, 900);
+}
+document.addEventListener("keydown", e => {
+  if (!S || !S.wr) return;
+  if (/^[a-z]$/i.test(e.key)) writeKey(e.key.toLowerCase());
+  else if (e.key === "Backspace") { e.preventDefault(); writeBack(); }
+  else if (e.key === "Enter") checkWrite();
+});
 
 /* ---- Build a sentence from word chips ---- */
 function renderSentence(T) {
